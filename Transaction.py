@@ -38,4 +38,3 @@ class Transaction:
         """
         # Todo
         pass
-

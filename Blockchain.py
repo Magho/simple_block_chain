@@ -8,7 +8,6 @@ class Blockchain:
             it contain
             * list for blocks
             * difficulty
-            * create genesis_block
         """
         # Todo
         pass
@@ -31,6 +30,7 @@ class Blockchain:
             * The previous_hash referred in the block and the hash of latest block
               in the chain match.
             * verify transactions
+            * check if block contain threshold transactions
             return True if valid or False if not valid
         """
         # Todo
@@ -42,4 +42,3 @@ class Blockchain:
         """
         # Todo
         pass
-

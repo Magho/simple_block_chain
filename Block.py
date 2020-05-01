@@ -26,4 +26,3 @@ class Block:
         """
         # Todo
         pass
-

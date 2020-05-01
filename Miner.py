@@ -39,8 +39,8 @@ class Miner:
 
     def is_valid_proof(self, block, block_hash):
         """
-            Check if block_hash is valid hash of block and satisfies
-            the difficulty criteria.
+            * Check if block_hash is valid hash of block and satisfies the difficulty criteria.
+            * check if block contain threshold transactions
             return true or false
         """
         # Todo
@@ -85,4 +85,5 @@ class Miner:
             *  verify using public key
             return true if valid signature or false if not
         """
-
+        # TODO
+        pass
