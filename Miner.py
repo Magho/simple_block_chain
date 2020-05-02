@@ -51,8 +51,23 @@ class Miner:
             Iterate through every block and check if it is valid
             return true if valid or false if not
         """
-        # Todo
-        pass
+        result = True
+        previous_hash = "0"
+
+        for block in chain:
+            block_hash = block.hash
+            # remove the hash field to recompute the hash again
+            # using `compute_hash` method.
+            delattr(block, "hash")
+
+            if not Blockchain.is_valid_proof(block, block_hash) or \
+                    previous_hash != block.previous_hash:
+                result = False
+                break
+
+            block.hash, previous_hash = block_hash, block_hash
+
+        return result
 
     def mine(self):
         """
