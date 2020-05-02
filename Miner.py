@@ -95,18 +95,29 @@ class Miner:
             return False
 
         last_block = self.block_chain.get_last_block()
+        transactions_tobe_mined, self.unconfirmed_transactions = self.get_transactions_tobe_mined()
 
         new_block = Block(index=last_block.index + 1,
-                          transactions=self.unconfirmed_transactions,
+                          transactions=transactions_tobe_mined,
                           timestamp=time.time(),
                           previous_hash=last_block.hash)
 
         proof = self.proof_of_work(new_block)
         self.block_chain.add_block(new_block, proof)
 
-        self.unconfirmed_transactions = []
-
         return True
+
+    def get_transactions_tobe_mined(self):
+        """
+            Filter the unconfirmed_transactions and select a subset to mine
+        :return:
+            transactions_tobe_mined
+        """
+        length = len(self.unconfirmed_transactions)
+        thr = self.block_chain.threshold
+        if length > thr:
+            return self.unconfirmed_transactions[0:thr], self.unconfirmed_transactions[thr:length]
+        return self.unconfirmed_transactions, []
 
     # Transaction Verification Methods
     def sign_utxo(self, recipient_in, utxo_in):
