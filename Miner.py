@@ -1,3 +1,6 @@
+import time
+
+from Block import Block
 from Blockchain import Blockchain
 
 
@@ -76,8 +79,22 @@ class Miner:
             and figuring out Proof Of Work or BFT.
             return true if done (pow or bft) or false if not
         """
-        # Todo
-        pass
+        if not self.unconfirmed_transactions:
+            return False
+
+        last_block = Blockchain.get_last_block()
+
+        new_block = Block(index=last_block.index + 1,
+                          transactions=self.unconfirmed_transactions,
+                          timestamp=time.time(),
+                          previous_hash=last_block.hash)
+
+        proof = self.proof_of_work(new_block)
+        Blockchain.add_block(new_block, proof)
+
+        self.unconfirmed_transactions = []
+
+        return True
 
     # Transaction Verification Methods
     def sign_utxo(self, recipient_in, utxo_in):
