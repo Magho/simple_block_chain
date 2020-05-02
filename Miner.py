@@ -14,7 +14,7 @@ class Miner:
             * private key
         """
         # Todo
-        pass
+        self.unconfirmed_transactions = []
 
     def proof_of_work(self, block):
         """
@@ -22,7 +22,6 @@ class Miner:
             that satisfies our difficulty criteria.
             return computed hash
         """
-        # Todo
         block.nonce = 0
 
         computed_hash = block.compute_hash()
@@ -44,8 +43,7 @@ class Miner:
         """
             add received transaction to the list of received transactions
         """
-        # Todo
-        pass
+        self.unconfirmed_transactions.append(transaction)
 
     def check_chain_validity(self, chain):
         """
