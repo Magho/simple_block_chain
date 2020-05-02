@@ -1,7 +1,9 @@
 import time
-
+from Crypto.PublicKey import RSA
+from Crypto import Random
 from Block import Block
 from Blockchain import Blockchain
+from UTXO import UTXO
 
 
 class Miner:
@@ -16,8 +18,18 @@ class Miner:
             * public key
             * private key
         """
-        # Todo
         self.unconfirmed_transactions = []
+        self.block_chain = Blockchain(2, 10)
+        #TODO: Register to sync block_chain
+        self.name = name_in
+
+        # Unspent Transaction Outputs (UXTO's); Starts w/ Initial Value In
+        self.utxo_pool = [UTXO(None, None, initial_value_in)]
+
+        # Generate Key Pair (Public, Private)
+        random_generator = Random.new().read
+        self.key = RSA.generate(1024, random_generator)  # Both Public & Private Keys
+        self.public_key = self.key.publickey()  # For External Access
 
     def proof_of_work(self, block):
         """
@@ -28,7 +40,7 @@ class Miner:
         block.nonce = 0
 
         computed_hash = block.compute_hash()
-        while not computed_hash.startswith('0' * Blockchain.difficulty):
+        while not computed_hash.startswith('0' * self.block_chain.difficulty):
             block.nonce += 1
             computed_hash = block.compute_hash()
 
@@ -63,7 +75,7 @@ class Miner:
             # using `compute_hash` method.
             delattr(block, "hash")
 
-            if not Blockchain.is_valid_proof(block, block_hash) or \
+            if not self.block_chain.is_valid_proof(block, block_hash) or \
                     previous_hash != block.previous_hash:
                 result = False
                 break
@@ -82,7 +94,7 @@ class Miner:
         if not self.unconfirmed_transactions:
             return False
 
-        last_block = Blockchain.get_last_block()
+        last_block = self.block_chain.get_last_block()
 
         new_block = Block(index=last_block.index + 1,
                           transactions=self.unconfirmed_transactions,
@@ -90,7 +102,7 @@ class Miner:
                           previous_hash=last_block.hash)
 
         proof = self.proof_of_work(new_block)
-        Blockchain.add_block(new_block, proof)
+        self.block_chain.add_block(new_block, proof)
 
         self.unconfirmed_transactions = []
 
