@@ -37,15 +37,6 @@ class Miner:
         # Todo
         pass
 
-    def is_valid_proof(self, block, block_hash):
-        """
-            * Check if block_hash is valid hash of block and satisfies the difficulty criteria.
-            * check if block contain threshold transactions
-            return true or false
-        """
-        # Todo
-        pass
-
     def check_chain_validity(self, chain):
         """
             A helper method to check if the entire blockchain is valid.
