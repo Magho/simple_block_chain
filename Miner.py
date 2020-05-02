@@ -1,3 +1,4 @@
+import hashlib
 import time
 from Crypto.PublicKey import RSA
 from Crypto import Random
@@ -128,8 +129,10 @@ class Miner:
             * create (utxo, receipent) to sign
             * sign
         """
-        # Todo
-        pass
+        to_sign = hashlib.sha256(str(utxo_in.transaction_hash.hexdigest()).encode('utf-8') + \
+                                 str(recipient_in.public_key).encode('utf-8'))
+
+        utxo_in.signature = self.key.sign(str(to_sign.hexdigest()).encode('utf-8'), '')
 
     def verify_utxo(self, sender_in, utxo_in):
         """
@@ -139,5 +142,7 @@ class Miner:
             *  verify using public key
             return true if valid signature or false if not
         """
-        # TODO
-        pass
+        to_verify = hashlib.sha256(str(utxo_in.transaction_hash.hexdigest()).encode('utf-8') + \
+                                   str(self.public_key).encode('utf-8'))
+
+        return sender_in.public_key.verify(str(to_verify.hexdigest()), utxo_in.signature)
