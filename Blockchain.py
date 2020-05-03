@@ -3,7 +3,7 @@ from Block import Block
 
 class Blockchain:
 
-    def __init__(self, difficulty, threshold):
+    def __init__(self, difficulty=2, threshold=1):#400
         """
             it contain
             * difficulty

@@ -27,7 +27,9 @@ class Block:
         self.transactions_length = len(transactions)
 
     def compute_hash(self):
-        block_string = json.dumps(self.__dict__, sort_keys=True)
+        dict_to_be_hashed = self.__dict__.copy()
+        del dict_to_be_hashed["transactions"]
+        block_string = json.dumps(dict_to_be_hashed, sort_keys=True)
         return sha256(block_string.encode()).hexdigest()
 
     def get_merkle_tree_hash(self, transactions):
@@ -36,9 +38,7 @@ class Block:
         # get hash of each transaction
         transactions_hashes = []
         for transaction in transactions:
-            transaction_string = json.dumps(transaction.__dict__, sort_keys=True)
-            transactions_hash = sha256(transaction_string.encode()).hexdigest()
-            transactions_hashes.append(transactions_hash)
+            transactions_hashes.append(transaction.hash)
 
         transactions_hashes.append("Marker")
         while True:

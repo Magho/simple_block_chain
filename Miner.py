@@ -5,6 +5,9 @@ from Crypto import Random
 from Block import Block
 from Blockchain import Blockchain
 from UTXO import UTXO
+import threading
+
+from utils import consensus, announce_new_block, transactions_difference
 
 
 class Miner:
@@ -20,10 +23,10 @@ class Miner:
             * private key
         """
         self.unconfirmed_transactions = []
-        self.block_chain = Blockchain(2, 10)
-        #TODO: Register to sync block_chain
+        self.unconfirmed_transactions_in_progress = []
+        self.blockchain = None
         self.name = name_in
-
+        self.peers = []
         # Unspent Transaction Outputs (UXTO's); Starts w/ Initial Value In
         self.utxo_pool = [UTXO(None, None, initial_value_in)]
 
@@ -31,6 +34,12 @@ class Miner:
         random_generator = Random.new().read
         self.key = RSA.generate(1024, random_generator)  # Both Public & Private Keys
         self.public_key = self.key.publickey()  # For External Access
+        self.state = "idle"
+        self.mining_task = None
+        self.lock = threading.Lock()
+
+    def set_blockchain(self, blockchain):
+        self.blockchain = blockchain
 
     def proof_of_work(self, block):
         """
@@ -39,9 +48,8 @@ class Miner:
             return computed hash
         """
         block.nonce = 0
-
         computed_hash = block.compute_hash()
-        while not computed_hash.startswith('0' * self.block_chain.difficulty):
+        while not computed_hash.startswith('0' * self.blockchain.difficulty):
             block.nonce += 1
             computed_hash = block.compute_hash()
 
@@ -60,6 +68,13 @@ class Miner:
             add received transaction to the list of received transactions
         """
         self.unconfirmed_transactions.append(transaction)
+        self.lock.acquire()
+        if len(self.unconfirmed_transactions) >= self.blockchain.threshold and not self.state == "mining":
+                thread = threading.Thread(target=self.mine)
+                self.state = "mining"
+                self.mining_task = thread.start()
+        self.lock.release()
+
 
     def check_chain_validity(self, chain):
         """
@@ -76,7 +91,7 @@ class Miner:
             # using `compute_hash` method.
             delattr(block, "hash")
 
-            if not self.block_chain.is_valid_proof(block, block_hash) or \
+            if not self.blockchain.is_valid_proof(block, block_hash) or \
                     previous_hash != block.previous_hash:
                 result = False
                 break
@@ -85,6 +100,7 @@ class Miner:
 
         return result
 
+    #TODO check BFT
     def mine(self):
         """
             This function serves as an interface to add the pending
@@ -94,19 +110,41 @@ class Miner:
         """
         if not self.unconfirmed_transactions:
             return False
-
-        last_block = self.block_chain.get_last_block()
-        transactions_tobe_mined, self.unconfirmed_transactions = self.get_transactions_tobe_mined()
-
+        last_block = self.blockchain.get_last_block()
+        self.unconfirmed_transactions_in_progress, self.unconfirmed_transactions = self.get_transactions_tobe_mined()
         new_block = Block(index=last_block.index + 1,
-                          transactions=transactions_tobe_mined,
+                          transactions=self.unconfirmed_transactions_in_progress,
                           timestamp=time.time(),
                           previous_hash=last_block.hash)
-
         proof = self.proof_of_work(new_block)
-        self.block_chain.add_block(new_block, proof)
+        added = self.blockchain.add_block(new_block, proof)
+        if not added:
+            raise Exception("Mining Failed!!")
+        chain_length = len(self.blockchain.chain)
+        self.blockchain = consensus(self.blockchain, self.peers)
+        if chain_length == len(self.blockchain.chain):
+            announce_new_block(self.blockchain.get_last_block(), self.peers)
+            if len(self.unconfirmed_transactions) >= self.blockchain.threshold:
+                self.mine()
+        self.state = "idle"
+        self.mining_task = None
 
-        return True
+
+    def get_notified(self, block):
+        if self.state == "mining":
+            self.state = "idle"
+            self.mining_task.stop()
+        self.unconfirmed_transactions = transactions_difference(self.unconfirmed_transactions, block.transactions)
+        self.unconfirmed_transactions = self.unconfirmed_transactions + transactions_difference(self.unconfirmed_transactions_in_progress, block.transactions)
+        self.unconfirmed_transactions_in_progress = []
+        self.lock.acquire()
+        if len(self.unconfirmed_transactions) >= self.blockchain.threshold and not self.state == "mining":
+            thread = threading.Thread(target=self.mine)
+            self.state = "mining"
+            self.mining_task = thread.start()
+        self.lock.release()
+
+
 
     def get_transactions_tobe_mined(self):
         """
@@ -115,7 +153,7 @@ class Miner:
             transactions_tobe_mined
         """
         length = len(self.unconfirmed_transactions)
-        thr = self.block_chain.threshold
+        thr = self.blockchain.threshold
         if length > thr:
             return self.unconfirmed_transactions[0:thr], self.unconfirmed_transactions[thr:length]
         return self.unconfirmed_transactions, []
@@ -146,3 +184,6 @@ class Miner:
                                    str(self.public_key).encode('utf-8'))
 
         return sender_in.public_key.verify(str(to_verify.hexdigest()), utxo_in.signature)
+
+    def set_peers(self, peers):
+        self.peers = peers

@@ -23,15 +23,15 @@ class Transaction:
 
         # Transaction's Unique ID (Double Hashed) ("TXID")
         self.hash = hashlib.sha256(str(hashlib.sha256(str(timestamp_in).encode() + \
-                                   str(value_in).encode() + str(size_in).encode()).hexdigest()).encode())
+                                   str(value_in).encode() + str(size_in).encode()).hexdigest()).encode()).hexdigest()
 
         # For Transaction Verification
         self.sender = sender_in
         self.recipient = recipient_in
 
         # Transaction Linkages
-        self.inputs, self.input_count = self.get_inputs()
-        self.outputs, self.output_count = self.create_outputs()
+        #self.inputs, self.input_count = self.get_inputs()
+        #self.outputs, self.output_count = self.create_outputs()
 
     def get_inputs(self):
         """
@@ -94,3 +94,4 @@ class Transaction:
             self.sender.utxo_pool.append(remainder_uxto)
 
         return outputs, len(outputs)
+
