@@ -1,6 +1,15 @@
+import hashlib
+import time
+
+from Crypto.PublicKey import RSA
+from Crypto import Random
+
+from Transaction import Transaction
+
+
 class Client:
 
-    def __init__(self, name_in, initial_value_in):
+    def __init__(self, name_in, peers):
         """
             new client should have
             * name
@@ -8,28 +17,29 @@ class Client:
             * public key
             * private key
         """
-        # Todo
-        pass
 
-    # Transaction Verification Methods
-    def sign_utxo(self, recipient_in, utxo_in):
-        """
-            From Satoshi's White Paper:
-                - Each owner transfers the coin to the next by digitally signing
-                a hash of the previous transaction and the public key of the next owner
-            * create (utxo, receipent) to sign
-            * sign
-        """
-        # Todo
-        pass
+        random_generator = Random.new().read
+        self.key = RSA.generate(1024, random_generator)
+        self.public_key = self.key.publickey()
+        self.name = name_in
+        self.peers = peers
+        self.utxo_pool = []
+        self.chain = None
 
-    def verify_utxo(self, sender_in, utxo_in):
+    def make_transaction(self, value_in, recipient_in):
+        transaction = Transaction(time.time(), value_in, self.public_key, recipient_in, self.utxo_pool)
+        to_sign = hashlib.sha256(str(transaction.hash).encode('utf-8') + str(transaction.recipients).encode('utf-8')).hexdigest()
+        signature = self.key.sign(to_sign)
+        transaction.set_signature(signature)
+        return transaction
+
+
+    def get_utxo_pool(self):
         """
-            From Satoshi's White Paper:
-            - A payee can verify the signatures to verify the chain of ownership.
-            * create (utxo, receipent) to vertify
-            *  verify using public key
-            return true if valid signature or false if not
+        get chain
+        loop transaction
+        get output transactions that has public key of client
+        :return:
         """
-        # TODO
+
         pass
