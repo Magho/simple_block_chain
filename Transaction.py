@@ -77,7 +77,8 @@ class Transaction:
         outputs = []
         if self.is_original:
             for i, recipient in enumerate(self.recipients):
-                outputs.append({"value": self.values[i], "index": i, "payee_public": recipient})
+                newUTXO = UTXO(self.hash, i, self.values[i], self.recipients[i])
+                outputs.append(newUTXO)
             return outputs, len(outputs)
         # Deduct Inputs from Value
         input_sum = 0
@@ -86,10 +87,11 @@ class Transaction:
 
         # Send Value to Recipient
         # Sender Signs Transaction w/ Its Private Key (Ensures That Only The Private Key Owner Can Spend!)
-        # transaction_val_uxto = UTXO(self.hash, 0, self.value)
+        # transaction_val_uxto = UTXO(self.hash, 0, self.value, sender)
         # self.sender.sign_utxo(self.recipient, transaction_val_uxto)
         for i,  recipient in enumerate(self.recipients):
-            outputs.append({"value": self.values[i], "index": i, "payee_public": recipient})
+            newUTXO = UTXO(self.hash, i, self.values[i], self.recipients[i])
+            outputs.append(newUTXO)
 
         # Recipient Accepts Output
         # Recipient Uses Public Key of Sender to Verify The Sender's Signature (To Verify Chain of Ownership!)
@@ -97,11 +99,12 @@ class Transaction:
 
         # (If Necessary) Return Change to Sender
         if input_sum - sum(self.values) > 0:
-            outputs.append({"value": input_sum - sum(self.values), "index": len(outputs), "payee_public": self.sender})
+            newUTXO = UTXO(self.hash, len(outputs), input_sum - sum(self.values), self.sender)
+            outputs.append(newUTXO)
 
         return outputs, len(outputs)
 
-    # TODO implement eng.Samia's variant
+    # TODO implement eng.Samia's variant previous tx
     def set_signature(self, signature):
         self.signature = signature
 

@@ -59,7 +59,7 @@ class Blockchain:
 
         if not self.is_valid_proof(block, proof):
             return False
-        
+
         for transaction in block.transactions:
             verified = self.verify_transaction(transaction)
             if not verified:
@@ -123,7 +123,7 @@ class Blockchain:
                     i = index(tx.recipients, sender)
                     if i == -1:
                         raise Exception("public key is not found!!")
-                    new_UTXO = UTXO(tx.hash, tx.recipients[i], tx.values[i])
+                    new_UTXO = UTXO(tx.hash, i, tx.values[i], tx.recipients[i])
                     utxo_pool.append(new_UTXO)
                 inputs = tx.inputs
                 for utxo_input in inputs:

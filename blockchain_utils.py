@@ -65,6 +65,14 @@ def consensus(blockchain, peers):
         return blockchain
     return blockchain
 
+def get_peers(peer):
+    """
+    get peer
+    """
+    response = requests.get(f'{peer}/peers')
+    peers = jsonpickle.decode(response.json()['peers'])
+    return peers
+
 
 def announce_new_block(block, peers):
     for peer in peers:
@@ -74,7 +82,7 @@ def announce_new_block(block, peers):
 
 def announce_new_transaction(transaction, peers):
     headers = {'Content-Type': "application/json"}
-    data = {"transaction": jsonpickle.encode(transaction.__dict__)}
+    data = {"transaction": jsonpickle.encode(transaction)}
     for peer in peers:
         print(peer)
         url = f'{peer}/new_transaction'

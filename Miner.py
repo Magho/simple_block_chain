@@ -7,7 +7,8 @@ from Blockchain import Blockchain
 from UTXO import UTXO
 import threading
 
-from blockchain_utils import consensus, announce_new_block, transactions_difference, contains_in_list, delete, index
+from blockchain_utils import consensus, announce_new_block
+from utils import transactions_difference, contains_in_list, delete, index
 
 
 class Miner:
@@ -26,9 +27,9 @@ class Miner:
         self.unconfirmed_transactions_in_progress = []
         self.blockchain = None
         self.name = name_in
-        self.peers = []
+        self.peers = set()
         # Unspent Transaction Outputs (UXTO's); Starts w/ Initial Value In
-        # self.utxo_pool = [UTXO(None, None, initial_value_in)]
+        # self.utxo_pool = [UTXO(None, 0, initial_value_in, None)]
 
         # Generate Key Pair (Public, Private)
         random_generator = Random.new().read
@@ -235,7 +236,7 @@ class Miner:
                     i = index(tx.recipients, sender)
                     if i == -1:
                         raise Exception("public key is not found!!")
-                    new_UTXO = UTXO(tx.hash, tx.recipients[i], tx.values[i])
+                    new_UTXO = UTXO(tx.hash, i, tx.values[i], tx.recipients[i])
                     utxo_pool.append(new_UTXO)
                 inputs = tx.inputs
                 for utxo_input in inputs:

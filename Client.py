@@ -38,7 +38,7 @@ class Client:
         """
         self.get_utxo_pool()
         transaction = Transaction(time.time(), value_in, self.public_key, recipient_in, self.utxo_pool, is_original=self.original)
-        to_sign = hashlib.sha256(str(transaction.hash).encode('utf-8') + str(transaction.recipients).encode('utf-8')).hexdigest().encode()
+        to_sign = hashlib.sha256(str(transaction.hash).encode() + str(transaction.recipients).encode()).hexdigest().encode()
         signature = self.key.sign(to_sign, '')
         transaction.set_signature(signature)
         return transaction
@@ -52,6 +52,7 @@ class Client:
         :return:
         """
         if self.name == 0:
+            # return as it is original client has no pool and no check
             return
         blockchain = Blockchain()
         blockchain = consensus(blockchain, self.peers)
@@ -60,7 +61,7 @@ class Client:
             for tx in block.transactions:
                 if contains_in_list(tx.recipients, self.public_key):
                     i = index(tx.recipients, self.public_key)
-                    new_UTXO = UTXO(tx.hash, tx.recipients[i], tx.values[i])
+                    new_UTXO = UTXO(tx.hash,  i, tx.values[i], tx.recipients[i])
                     self.utxo_pool.append(new_UTXO)
                 inputs = tx.inputs
                 for utxo_input in inputs:

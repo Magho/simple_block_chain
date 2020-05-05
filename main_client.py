@@ -5,15 +5,18 @@
 4) make transaction
 """
 from Client import Client
-from blockchain_utils import announce_new_transaction
+from blockchain_utils import announce_new_transaction, get_peers
 
 clients = {}
 peers = set()
-peers.add("http://localhost:5000")
-clients[0] = Client(0, peers)
+#TODO add special miner IP
+special_miner = "http://localhost:5000"
+peers.add(special_miner)
+clients[0] = Client(0, peers) # 0 is the original client
 f = open("TxDataset/txdataset.txt", "r")
 lines = f.readlines()
 for line in lines:
+    peers.update(get_peers(special_miner))
     parameters = line.split("\t")
     print(parameters)
     sender = None

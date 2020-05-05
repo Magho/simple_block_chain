@@ -1,0 +1,3 @@
+48	intput:0	value:74.382126	output:48
+49	intput:0	value:81.75023	output:49
+49	intput:48	value:81.75023	output:49

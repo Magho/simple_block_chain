@@ -35,11 +35,10 @@ if miner.name != "special miner":
     headers = {'Content-Type': "application/json"}
     response = requests.post(node_address + "/register_node", data=json.dumps(data), headers=headers)
 
-    chain_dump = response.json()['chain']
+    chain = jsonpickle.decode(response.json()['chain'])
     threshold = response.json()['threshold']
     difficulty = response.json()['difficulty']
-
-    blockchain = create_chain_from_dump(chain_dump)
+    blockchain.chain = chain
 
     peers.update(response.json()['peers'])
 
@@ -71,11 +70,13 @@ def new_transaction():
 
 @app.route('/chain_peers', methods=['GET'])
 def get_chain_peers():
-    chain_data = []
-    for block in blockchain.chain:
-        chain_data.append(jsonpickle.encode(block.__dict__))
+    chain_data = jsonpickle.encode(blockchain.chain)
     return json.dumps({"length": len(chain_data), "chain": chain_data, "peers": list(peers), "threshold": blockchain.threshold, "difficulty" : blockchain.difficulty}), 200
 
+@app.route('/peers', methods=['GET'])
+def get_peers():
+    peers_data = jsonpickle.encode(peers)
+    return json.dumps({"peers": peers_data}), 200
 
 @app.route('/chain', methods=['GET'])
 def get_chain():
