@@ -7,7 +7,7 @@ from Blockchain import Blockchain
 from UTXO import UTXO
 import threading
 
-from utils import consensus, announce_new_block, transactions_difference
+from blockchain_utils import consensus, announce_new_block, transactions_difference, contains_in_list, delete, index
 
 
 class Miner:
@@ -28,7 +28,7 @@ class Miner:
         self.name = name_in
         self.peers = []
         # Unspent Transaction Outputs (UXTO's); Starts w/ Initial Value In
-        self.utxo_pool = [UTXO(None, None, initial_value_in)]
+        # self.utxo_pool = [UTXO(None, None, initial_value_in)]
 
         # Generate Key Pair (Public, Private)
         random_generator = Random.new().read
@@ -67,9 +67,10 @@ class Miner:
         """
             add received transaction to the list of received transactions
         """
+        if not self.verify_transaction(transaction):
+            return False
         self.unconfirmed_transactions.append(transaction)
         self.lock.acquire()
-        # TODO verify transaction -> owner signature and double spending
         if len(self.unconfirmed_transactions) >= self.blockchain.threshold and not self.state == "mining":
                 thread = threading.Thread(target=self.mine)
                 self.state = "mining"
@@ -188,3 +189,56 @@ class Miner:
 
     def set_peers(self, peers):
         self.peers = peers
+
+    def verify_transaction(self, transaction):
+        """
+        verify transaction:
+        * check sender signature
+        * check value in >= value out
+        * check there exists a transaction hash in a block containing the hash of the input transaction if not original
+        * check that the index of utxo recipient corresponds to the sender
+        * check no transaction mention this output before.(double spending)
+        :param transaction:
+        :return true if transaction is valid:
+        """
+        verified = transaction.verify(transaction.sender)
+        if not verified:
+            return False
+
+        if transaction.is_original:
+            return True
+
+        input_sum = 0
+        utxo_pool = self.get_utxo_pool(transaction.sender)
+        for input_utxo in transaction.inputs:
+            input_sum += input_utxo.value
+            if not contains_in_list(utxo_pool, input_utxo):
+                return False
+        output_sum = 0
+        for output_utxo in transaction.outputs:
+            output_sum += output_utxo.value
+        if output_sum > input_sum:
+            return False
+
+    def get_utxo_pool(self, sender):
+        """
+        get chain
+        loop transaction
+        get output transactions that has public key of client
+        :return:
+        """
+        #TODO check race condition of all APIs
+        utxo_pool = []
+        for block in self.blockchain.chain:
+            for tx in block.transactions:
+                if contains_in_list(tx.recipients, sender):
+                    i = index(tx.recipients, sender)
+                    if i == -1:
+                        raise Exception("public key is not found!!")
+                    new_UTXO = UTXO(tx.hash, tx.recipients[i], tx.values[i])
+                    utxo_pool.append(new_UTXO)
+                inputs = tx.inputs
+                for utxo_input in inputs:
+                    if contains_in_list(utxo_pool, utxo_input):
+                        utxo_pool = delete(utxo_pool, utxo_input)
+        return utxo_pool

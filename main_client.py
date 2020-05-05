@@ -5,7 +5,7 @@
 4) make transaction
 """
 from Client import Client
-from utils import announce_new_transaction
+from blockchain_utils import announce_new_transaction
 
 clients = {}
 peers = set()

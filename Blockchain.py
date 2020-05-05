@@ -1,4 +1,6 @@
 from Block import Block
+from UTXO import UTXO
+from utils import contains_in_list, index, delete
 
 
 class Blockchain:
@@ -57,8 +59,11 @@ class Blockchain:
 
         if not self.is_valid_proof(block, proof):
             return False
-
-        # TODO verify transactions
+        
+        for transaction in block.transactions:
+            verified = self.verify_transaction(transaction)
+            if not verified:
+                return False
 
         block.hash = proof
         self.chain.append(block)
@@ -72,3 +77,56 @@ class Blockchain:
 
     def change_difficulty(self, difficulty):
         self.difficulty = difficulty
+
+    def verify_transaction(self, transaction):
+        """
+        verify transaction:
+        * check sender signature
+        * check value in >= value out
+        * check there exists a transaction hash in a block containing the hash of the input transaction if not original
+        * check that the index of utxo recipient corresponds to the sender
+        * check no transaction mention this output before.(double spending)
+        :param transaction:
+        :return true if transaction is valid:
+        """
+        verified = transaction.verify(transaction.sender)
+        if not verified:
+            return False
+
+        if transaction.is_original:
+            return True
+
+        input_sum = 0
+        utxo_pool = self.get_utxo_pool(transaction.sender)
+        for input_utxo in transaction.inputs:
+            input_sum += input_utxo.value
+            if not contains_in_list(utxo_pool, input_utxo):
+                return False
+        output_sum = 0
+        for output_utxo in transaction.outputs:
+            output_sum += output_utxo.value
+        if output_sum > input_sum:
+            return False
+
+    def get_utxo_pool(self, sender):
+        """
+        get chain
+        loop transaction
+        get output transactions that has public key of client
+        :return:
+        """
+        #TODO check race condition of all APIs
+        utxo_pool = []
+        for block in self.chain:
+            for tx in block.transactions:
+                if contains_in_list(tx.recipients, sender):
+                    i = index(tx.recipients, sender)
+                    if i == -1:
+                        raise Exception("public key is not found!!")
+                    new_UTXO = UTXO(tx.hash, tx.recipients[i], tx.values[i])
+                    utxo_pool.append(new_UTXO)
+                inputs = tx.inputs
+                for utxo_input in inputs:
+                    if contains_in_list(utxo_pool, utxo_input):
+                        utxo_pool = delete(utxo_pool, utxo_input)
+        return utxo_pool

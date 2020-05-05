@@ -7,8 +7,8 @@ from Crypto import Random
 from Blockchain import Blockchain
 from Transaction import Transaction
 from UTXO import UTXO
-from utils import consensus, contains, delete
-
+from blockchain_utils import consensus
+from utils import contains_in_list, delete, index
 
 class Client:
 
@@ -58,11 +58,11 @@ class Client:
         self.utxo_pool = []
         for block in blockchain.chain:
             for tx in block.transactions:
-                if contains(tx.recipients, self.public_key):
-                    index = tx.recipients.index(self.public_key)
-                    new_UTXO = UTXO(tx.hash, tx.recipients[index], tx.values[index])
+                if contains_in_list(tx.recipients, self.public_key):
+                    i = index(tx.recipients, self.public_key)
+                    new_UTXO = UTXO(tx.hash, tx.recipients[i], tx.values[i])
                     self.utxo_pool.append(new_UTXO)
                 inputs = tx.inputs
                 for utxo_input in inputs:
-                    if contains(self.utxo_pool, utxo_input):
+                    if contains_in_list(self.utxo_pool, utxo_input):
                         self.utxo_pool = delete(self.utxo_pool, utxo_input)

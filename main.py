@@ -16,7 +16,7 @@ from Block import Block
 from Blockchain import Blockchain
 from Miner import Miner
 from Transaction import Transaction
-from utils import *
+from blockchain_utils import *
 import jsonpickle
 
 app = Flask(__name__)
