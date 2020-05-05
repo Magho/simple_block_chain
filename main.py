@@ -59,12 +59,12 @@ miner.set_blockchain(blockchain)
 @app.route('/new_transaction', methods=['POST'])
 def new_transaction():
     tx_data = request.get_json()
-    # TODO change required field of transaction
-    required_fields = ["timestamp_in", "value_in", "size_in", "sender_in", "recipient_in"]
+    print(tx_data)
+    required_fields = ["transaction"]
     if not all(k in tx_data for k in required_fields):
         return 'Invalid transaction data', 404
 
-    transaction = Transaction(tx_data["timestamp_in"], tx_data["value_in"], tx_data["size_in"], tx_data["sender_in"], tx_data["recipient_in"])
+    transaction = jsonpickle.encode(tx_data["transaction"])
     miner.add_new_transaction(transaction)
 
     return "Success", 200
@@ -79,9 +79,7 @@ def get_chain_peers():
 
 @app.route('/chain', methods=['GET'])
 def get_chain():
-    chain_data = []
-    for block in blockchain.chain:
-        chain_data.append(jsonpickle.encode(block.__dict__))
+    chain_data = jsonpickle.encode(blockchain.chain)
     return json.dumps({"length": len(chain_data), "chain": chain_data, "threshold": blockchain.threshold, "difficulty" : blockchain.difficulty}), 200
 
 
@@ -107,6 +105,10 @@ def verify_and_add_block():
     miner.get_notified(block)
     return "Block added to the chain", 201
 
+@app.route('/pending_tx')
+def get_pending_tx():
+    return jsonpickle.encode(miner.unconfirmed_transactions)
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
+

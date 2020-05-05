@@ -13,7 +13,7 @@ from UTXO import UTXO
 
 class Transaction:
 
-    def __init__(self, timestamp_in, value_in, sender_in, recipient_in, sender_utxo_pool):
+    def __init__(self, timestamp_in, value_in, sender_in, recipient_in, sender_utxo_pool, is_original=False):
         """
             transaction contain
             * timestamp
@@ -32,9 +32,9 @@ class Transaction:
         self.hash = hashlib.sha256(str(hashlib.sha256(str(timestamp_in).encode() + str(value_in).encode() + str(recipient_in).encode() + str(sender_in).encode()).hexdigest()).encode()).hexdigest()
         self.signature = None
         # For Transaction Verification
+        self.is_original = is_original
         self.sender = sender_in
         self.recipients = recipient_in
-
         # Transaction Linkages
         self.inputs, self.input_count = self.get_inputs(sender_utxo_pool)
         self.outputs, self.output_count = self.create_outputs()
@@ -75,7 +75,10 @@ class Transaction:
             return outputs, length of outputs
         """
         outputs = []
-
+        if self.is_original:
+            for i, recipient in enumerate(self.recipients):
+                outputs.append({"value": self.values[i], "index": i, "payee_public": recipient})
+            return outputs, len(outputs)
         # Deduct Inputs from Value
         input_sum = 0
         for i in self.inputs:
@@ -103,6 +106,6 @@ class Transaction:
         self.signature = signature
 
     def verify(self, sender):
-        to_verify = hashlib.sha256(str(self.hash).encode('utf-8') + str(self.recipients).encode('utf-8')).hexdigest()
-        return sender.verify(str(to_verify), self.signature)
+        to_verify = hashlib.sha256(str(self.hash).encode('utf-8') + str(self.recipients).encode('utf-8')).hexdigest().encode()
+        return sender.verify(to_verify, self.signature)
 

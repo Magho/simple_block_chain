@@ -3,7 +3,7 @@ from Block import Block
 
 class Blockchain:
 
-    def __init__(self, difficulty=2, threshold=1):#400
+    def __init__(self, difficulty=2, threshold=400):
         """
             it contain
             * difficulty
@@ -21,7 +21,12 @@ class Blockchain:
             a valid hash.
         """
         genesis_block = Block(0, [], 0, "0")
-        genesis_block.hash = genesis_block.compute_hash()
+        genesis_block.nonce = 0
+        computed_hash = genesis_block.compute_hash()
+        while not computed_hash.startswith('0' * self.difficulty):
+            genesis_block.nonce += 1
+            computed_hash = genesis_block.compute_hash()
+        genesis_block.hash = computed_hash
         self.chain.append(genesis_block)
 
     def is_valid_proof(self, block, block_hash):

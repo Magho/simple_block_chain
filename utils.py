@@ -1,5 +1,6 @@
 import json
 
+import jsonpickle
 import requests
 
 from Block import Block
@@ -21,6 +22,30 @@ def create_chain_from_dump(chain_dump, threshold=400, difficulty=2):
     return generated_blockchain
 
 
+def check_chain_validity(blockchain, chain):
+    """
+        A helper method to check if the entire blockchain is valid.
+        Iterate through every block and check if it is valid
+        return true if valid or false if not
+    """
+    result = True
+    previous_hash = "0"
+
+    for block in chain:
+        block_hash = block.hash
+        # remove the hash field to recompute the hash again
+        # using `compute_hash` method.
+        delattr(block, "hash")
+        if not blockchain.is_valid_proof(block, block_hash) or previous_hash != block.previous_hash:
+
+            result = False
+            break
+
+        block.hash, previous_hash = block_hash, block_hash
+
+    return result
+
+
 def consensus(blockchain, peers):
     """
     Our simple consensus algorithm. If a longer valid chain is
@@ -29,10 +54,10 @@ def consensus(blockchain, peers):
     longest_chain = None
     current_len = len(blockchain.chain)
     for node in peers:
-        response = requests.get(f'{node}/register_node')# IP_peer:port/chain
+        response = requests.get(f'{node}/chain')# IP_peer:port/chain
         length = response.json()['length']
-        chain = response.json()['chain']
-        if length > current_len and blockchain.check_chain_validity(chain):
+        chain = jsonpickle.decode(response.json()['chain'])
+        if length > current_len and check_chain_validity(blockchain, chain):
             current_len = length
             longest_chain = chain
     if longest_chain:
@@ -47,6 +72,15 @@ def announce_new_block(block, peers):
         requests.post(url, data=json.dumps(block.__dict__, sort_keys=True))
 
 
+def announce_new_transaction(transaction, peers):
+    headers = {'Content-Type': "application/json"}
+    data = {"transaction": jsonpickle.encode(transaction.__dict__)}
+    for peer in peers:
+        print(peer)
+        url = f'{peer}/new_transaction'
+        requests.post(url, data=json.dumps(data), headers=headers)
+
+
 def transactions_difference(transactions1, transactions2):
     result = []
     for transaction1 in transactions1:
@@ -59,6 +93,17 @@ def transactions_difference(transactions1, transactions2):
             result.append(transaction1)
     return result
 
+def contains(list, object):
+    list_encoding = jsonpickle.encode(list)
+    object_encoding = jsonpickle.encode(object)
+    return object_encoding in list_encoding
 
+def delete(list, object):
+    object_encoding = jsonpickle.encode(object)
+    for e in list:
+        element_encoding = jsonpickle.encode(e)
+        if element_encoding == object_encoding:
+            list.remove(e)
+    return list
 
 

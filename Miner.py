@@ -69,6 +69,7 @@ class Miner:
         """
         self.unconfirmed_transactions.append(transaction)
         self.lock.acquire()
+        # TODO verify transaction -> owner signature and double spending
         if len(self.unconfirmed_transactions) >= self.blockchain.threshold and not self.state == "mining":
                 thread = threading.Thread(target=self.mine)
                 self.state = "mining"

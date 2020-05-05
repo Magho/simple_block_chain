@@ -4,7 +4,10 @@ import time
 from Crypto.PublicKey import RSA
 from Crypto import Random
 
+from Blockchain import Blockchain
 from Transaction import Transaction
+from UTXO import UTXO
+from utils import consensus, contains, delete
 
 
 class Client:
@@ -25,11 +28,18 @@ class Client:
         self.peers = peers
         self.utxo_pool = []
         self.chain = None
+        self.original = name_in == 0
 
     def make_transaction(self, value_in, recipient_in):
-        transaction = Transaction(time.time(), value_in, self.public_key, recipient_in, self.utxo_pool)
-        to_sign = hashlib.sha256(str(transaction.hash).encode('utf-8') + str(transaction.recipients).encode('utf-8')).hexdigest()
-        signature = self.key.sign(to_sign)
+        """
+        :param value_in:
+        :param recipient_in:
+        :return:
+        """
+        self.get_utxo_pool()
+        transaction = Transaction(time.time(), value_in, self.public_key, recipient_in, self.utxo_pool, is_original=self.original)
+        to_sign = hashlib.sha256(str(transaction.hash).encode('utf-8') + str(transaction.recipients).encode('utf-8')).hexdigest().encode()
+        signature = self.key.sign(to_sign, '')
         transaction.set_signature(signature)
         return transaction
 
@@ -41,5 +51,18 @@ class Client:
         get output transactions that has public key of client
         :return:
         """
-
-        pass
+        if self.name == 0:
+            return
+        blockchain = Blockchain()
+        blockchain = consensus(blockchain, self.peers)
+        self.utxo_pool = []
+        for block in blockchain.chain:
+            for tx in block.transactions:
+                if contains(tx.recipients, self.public_key):
+                    index = tx.recipients.index(self.public_key)
+                    new_UTXO = UTXO(tx.hash, tx.recipients[index], tx.values[index])
+                    self.utxo_pool.append(new_UTXO)
+                inputs = tx.inputs
+                for utxo_input in inputs:
+                    if contains(self.utxo_pool, utxo_input):
+                        self.utxo_pool = delete(self.utxo_pool, utxo_input)

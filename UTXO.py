@@ -11,4 +11,3 @@ class UTXO:
         self.transaction_hash = transaction_hash_in
         self.output_index = output_index_in
         self.value = value_in
-        self.signature = None
