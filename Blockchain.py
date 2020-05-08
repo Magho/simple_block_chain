@@ -5,7 +5,7 @@ from utils import contains_in_list, index, delete
 
 class Blockchain:
 
-    def __init__(self, difficulty=2, threshold=400):
+    def __init__(self, difficulty=2, threshold=1):
         """
             it contain
             * difficulty
@@ -51,20 +51,25 @@ class Blockchain:
             return True if valid or False if not valid
         """
         previous_hash = self.get_last_block().hash
+        print(f"add block {block.__dict__} with proof {proof}")
         if previous_hash != block.previous_hash:
+            print(f"not equal hashes {previous_hash} and {block.previous_hash}")
             return False
 
         if block.transactions_length != self.threshold:
+            print(f"transactions length {block.transactions_length} does not reach threshold")
             return False
 
         if not self.is_valid_proof(block, proof):
+            print(f"not valid proof {proof}")
             return False
-
+        print(f"check transactions in the block")
         for transaction in block.transactions:
+            print(f"check transaction: {transaction.__dict__}")
             verified = self.verify_transaction(transaction)
+            print(f"is verified: {verified}")
             if not verified:
                 return False
-
         block.hash = proof
         self.chain.append(block)
         return True
@@ -107,6 +112,7 @@ class Blockchain:
             output_sum += output_utxo.value
         if output_sum > input_sum:
             return False
+        return True
 
     def get_utxo_pool(self, sender):
         """

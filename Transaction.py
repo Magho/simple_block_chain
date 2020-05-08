@@ -8,6 +8,9 @@ client has:
 6) time of transaction
 """
 import hashlib
+
+import jsonpickle
+
 from UTXO import UTXO
 
 
@@ -49,15 +52,17 @@ class Transaction:
         """
         inputs = []
         inputs_sum = 0
-        for u in utxo_pool:
-
+        print(f"getting inputs: values{self.values}, sum of values {sum(self.values)}")
+        for u in list(utxo_pool):
+            print(f"spending utxo {u.__dict__}")
             # Add UTXO to Transaction Inputs
             inputs.append(u)
             inputs_sum += u.value
 
             # Remove from UTXO Pool - Eliminates 'Double Spend' Problem
             utxo_pool.remove(u)
-
+            print(f"current utxo pool: {utxo_pool}")
+            print(f"current input sum = {inputs_sum}, is sufficient? {inputs_sum >= sum(self.values)}")
             # Check If We're Done Adding Transaction Inputs
             if inputs_sum >= sum(self.values):
                 break
@@ -101,6 +106,8 @@ class Transaction:
         if input_sum - sum(self.values) > 0:
             newUTXO = UTXO(self.hash, len(outputs), input_sum - sum(self.values), self.sender)
             outputs.append(newUTXO)
+            self.values.append(input_sum - sum(self.values))
+            self.recipients.append(self.sender)
 
         return outputs, len(outputs)
 
@@ -109,6 +116,10 @@ class Transaction:
         self.signature = signature
 
     def verify(self, sender):
-        to_verify = hashlib.sha256(str(self.hash).encode('utf-8') + str(self.recipients).encode('utf-8')).hexdigest().encode()
+        print(f'-verify: transaction hash = {self.hash}, recipients = {self.recipients}')
+        to_verify = hashlib.sha256(str(self.hash).encode() + jsonpickle.encode(self.recipients).encode()).hexdigest().encode()
+        print(f'verify transaction {to_verify}')
+        print(f'sender key {sender.e}, {sender.n}')
+        print(f'verified? {sender.verify(to_verify, self.signature)}')
         return sender.verify(to_verify, self.signature)
 

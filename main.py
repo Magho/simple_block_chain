@@ -63,7 +63,7 @@ def new_transaction():
     if not all(k in tx_data for k in required_fields):
         return 'Invalid transaction data', 404
 
-    transaction = jsonpickle.encode(tx_data["transaction"])
+    transaction = jsonpickle.decode(tx_data["transaction"])
     miner.add_new_transaction(transaction)
 
     return "Success", 200
@@ -71,7 +71,7 @@ def new_transaction():
 @app.route('/chain_peers', methods=['GET'])
 def get_chain_peers():
     chain_data = jsonpickle.encode(blockchain.chain)
-    return json.dumps({"length": len(chain_data), "chain": chain_data, "peers": list(peers), "threshold": blockchain.threshold, "difficulty" : blockchain.difficulty}), 200
+    return json.dumps({"length": len(blockchain.chain), "chain": chain_data, "peers": list(peers), "threshold": blockchain.threshold, "difficulty" : blockchain.difficulty}), 200
 
 @app.route('/peers', methods=['GET'])
 def get_peers():
@@ -81,7 +81,7 @@ def get_peers():
 @app.route('/chain', methods=['GET'])
 def get_chain():
     chain_data = jsonpickle.encode(blockchain.chain)
-    return json.dumps({"length": len(chain_data), "chain": chain_data, "threshold": blockchain.threshold, "difficulty" : blockchain.difficulty}), 200
+    return json.dumps({"length": len(blockchain.chain), "chain": chain_data, "threshold": blockchain.threshold, "difficulty" : blockchain.difficulty}), 200
 
 
 @app.route('/register_node', methods=['POST'])

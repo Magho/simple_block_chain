@@ -1,6 +1,7 @@
 import hashlib
 import time
 
+import jsonpickle
 from Crypto.PublicKey import RSA
 from Crypto import Random
 
@@ -37,8 +38,13 @@ class Client:
         :return:
         """
         self.get_utxo_pool()
+
+        print(f'value of transaction: {value_in}, {self.utxo_pool}')
         transaction = Transaction(time.time(), value_in, self.public_key, recipient_in, self.utxo_pool, is_original=self.original)
-        to_sign = hashlib.sha256(str(transaction.hash).encode() + str(transaction.recipients).encode()).hexdigest().encode()
+        to_sign = hashlib.sha256(str(transaction.hash).encode() + jsonpickle.encode(transaction.recipients).encode()).hexdigest().encode()
+        print(f'-make_transaction: transaction hash = {transaction.hash}, recipients = {transaction.recipients}')
+        print(f'sign transaction: {to_sign}')
+        print(f'sender key {self.public_key.e}, {self.public_key.n}')
         signature = self.key.sign(to_sign, '')
         transaction.set_signature(signature)
         return transaction
