@@ -75,9 +75,11 @@ def get_peers(peer):
 
 
 def announce_new_block(block, peers):
+    headers = {'Content-Type': "application/json"}
+    data = {"block": jsonpickle.encode(block)}
     for peer in peers:
         url = f'{peer}/add_block'
-        requests.post(url, data=json.dumps(block.__dict__, sort_keys=True))
+        requests.post(url, data=json.dumps(data), headers=headers)
 
 
 def announce_new_transaction(transaction, peers):

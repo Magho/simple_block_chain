@@ -22,12 +22,12 @@ import jsonpickle
 app = Flask(__name__)
 
 blockchain = Blockchain()
-miner = Miner("special miner", 0)
-my_node_address = "http://197.55.175.10:5000"
+miner = Miner("a miner", 0)
+my_node_address = "http://197.55.175.10:5001"
 # Address format : http://IP:port
 peers = set()
 if miner.name != "special miner":
-    node_address = "http://197.55.175.10:5000" # Special miner
+    node_address = "http://197.160.27.226:5000"#"http://102.40.55.128:5000" # Special miner
     peers.add(node_address)
     if not node_address:
         print("ERROR!")
@@ -36,6 +36,7 @@ if miner.name != "special miner":
     data = {"node_address": my_node_address}
     headers = {'Content-Type': "application/json"}
     response = requests.post(node_address + "/register_node", data=json.dumps(data), headers=headers)
+    print(response.__dict__)
     print(response.json())
     chain = jsonpickle.decode(response.json()['chain'])
     threshold = response.json()['threshold']
@@ -102,7 +103,7 @@ def register_new_peers():
 
 @app.route('/add_block', methods=['POST'])
 def verify_and_add_block():
-    block_data = request.get_json()
+    block_data = jsonpickle.decode(request.get_json()["block"]).__dict__
     block = Block(block_data["index"], block_data["transactions"], block_data["timestamp"], block_data["previous_hash"], nonce=block_data["nonce"])
     proof = block_data["hash"]
     added = blockchain.add_block(block, proof)
@@ -116,5 +117,5 @@ def get_pending_tx():
     return jsonpickle.encode(miner.unconfirmed_transactions)
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
+    app.run(host='0.0.0.0', port=5001)
 

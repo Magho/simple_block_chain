@@ -128,7 +128,12 @@ class Miner:
 
         added = self.blockchain.add_block(new_block, proof)
         if not added:
-            raise Exception("Mining Failed!!")
+            if len(self.unconfirmed_transactions) >= self.blockchain.threshold:
+                print(f'mine new block')
+                self.mine()
+            self.state = "idle"
+            self.mining_task = None
+            return
         print(f'block {new_block.__dict__} is mined and added locally successfully!')
         chain_length = len(self.blockchain.chain)
         self.blockchain = consensus(self.blockchain, self.peers)
