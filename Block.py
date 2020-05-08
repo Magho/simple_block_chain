@@ -1,6 +1,8 @@
 import json
 from hashlib import sha256
 
+import jsonpickle
+
 
 class Block:
     def __init__(self, index, transactions, timestamp, previous_hash, nonce=0):
@@ -27,10 +29,8 @@ class Block:
         self.transactions_length = len(transactions)
 
     def compute_hash(self):
-        dict_to_be_hashed = self.__dict__.copy()
-        del dict_to_be_hashed["transactions"]
-        block_string = json.dumps(dict_to_be_hashed, sort_keys=True)
-        return sha256(block_string.encode()).hexdigest()
+        dict_to_be_hashed = jsonpickle.encode(self.__dict__)
+        return sha256(dict_to_be_hashed.encode()).hexdigest()
 
     def get_merkle_tree_hash(self, transactions):
         if len(transactions) == 0:
