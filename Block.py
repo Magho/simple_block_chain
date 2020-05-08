@@ -29,7 +29,7 @@ class Block:
         self.transactions_length = len(transactions)
 
     def compute_hash(self):
-        dict_to_be_hashed = jsonpickle.encode(self.__dict__)
+        dict_to_be_hashed = jsonpickle.encode((self.transactions, self.merkle_tree_hash, self.previous_hash))
         return sha256(dict_to_be_hashed.encode()).hexdigest()
 
     def get_merkle_tree_hash(self, transactions):
