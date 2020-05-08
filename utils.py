@@ -5,8 +5,8 @@ def transactions_difference(transactions1, transactions2):
     result = []
     for transaction1 in transactions1:
         found = False
-        for transactions2 in transactions2:
-            found = transactions2.hash == transaction1.hash
+        for transaction2 in transactions2:
+            found = transaction2.hash == transaction1.hash
             if found:
                 break
         if not found:
