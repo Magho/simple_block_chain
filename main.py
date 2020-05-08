@@ -22,25 +22,30 @@ import jsonpickle
 app = Flask(__name__)
 
 blockchain = Blockchain()
-miner = Miner("special miner", 0)
+miner = Miner("a miner", 0)
+my_node_address = "http://192.168.1.108:5001"
 # Address format : http://IP:port
 peers = set()
 if miner.name != "special miner":
-    node_address = "http://special miner:5000"#TODO specify IP
+    node_address = "http://192.168.1.108:5000" # Special miner
+    peers.add(node_address)
     if not node_address:
         print("ERROR!")
         raise Exception("Node address is not specified!")
 
-    data = {"node_address": request.host_url}
+    data = {"node_address": "http://192.168.1.108:5001"}
     headers = {'Content-Type': "application/json"}
     response = requests.post(node_address + "/register_node", data=json.dumps(data), headers=headers)
-
+    print(response.json())
     chain = jsonpickle.decode(response.json()['chain'])
     threshold = response.json()['threshold']
     difficulty = response.json()['difficulty']
     blockchain.chain = chain
 
     peers.update(response.json()['peers'])
+    for peer in peers:
+        response = requests.post(peer + "/register_node", data=json.dumps(data), headers=headers)
+    peers.remove(my_node_address) # TODO should remove your address
 
     miner.set_peers(peers)
 
@@ -111,5 +116,5 @@ def get_pending_tx():
     return jsonpickle.encode(miner.unconfirmed_transactions)
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
+    app.run(host='0.0.0.0', port=5001)
 
