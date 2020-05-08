@@ -121,5 +121,5 @@ class Transaction:
         print(f'verify transaction {to_verify}')
         print(f'sender key {sender.e}, {sender.n}')
         print(f'verified? {sender.verify(to_verify, self.signature)}')
-        return sender.verify(to_verify, self.signature)
+        return self.sender.verify(to_verify, self.signature)
 

@@ -62,6 +62,7 @@ class Client:
             return
         blockchain = Blockchain()
         blockchain = consensus(blockchain, self.peers)
+        print(f'blockchain chain: {blockchain.chain}')
         self.utxo_pool = []
         for block in blockchain.chain:
             for tx in block.transactions:

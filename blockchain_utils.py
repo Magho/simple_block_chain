@@ -54,10 +54,13 @@ def consensus(blockchain, peers):
     longest_chain = None
     current_len = len(blockchain.chain)
     for node in peers:
+        print(f'consensus node: {node}')
         response = requests.get(f'{node}/chain')# IP_peer:port/chain
         length = response.json()['length']
         chain = jsonpickle.decode(response.json()['chain'])
+        print(f'chain of consensus: {chain}')
         if length > current_len and check_chain_validity(blockchain, chain):
+            print(f'update chain: {chain}')
             current_len = length
             longest_chain = chain
     if longest_chain:
