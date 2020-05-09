@@ -27,7 +27,7 @@ blockchain = Blockchain()
 test_names = ["special miner", "a miner"]
 test_ips = ["http://192.168.1.108:5000", "http://192.168.1.108:5001"]
 test_ports = [5000, 5001]
-test = 1
+test = 0
 miner = Miner(test_names[test], 0)
 my_node_address = test_ips[test]#"http://192.168.1.108:5001"#"http://197.55.175.10:5000"
 # Address format : http://IP:port

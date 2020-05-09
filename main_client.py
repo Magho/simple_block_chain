@@ -21,7 +21,7 @@ for line in lines:
     peers.update(get_peers(special_miner))
     log("main_client", f"current peers = {peers}")
     parameters = line.split("\t")
-    log("main_client", f"current parameters = {parameter}")
+    log("main_client", f"current parameters = {parameters}")
     sender = None
     recipients = []
     values = []

@@ -70,7 +70,7 @@ class Miner:
         """
         log("add_new_transaction", f"New transaction is being added: {transaction.__dict__}")
         if not self.verify_transaction(transaction):
-            log("add_new_transaction", "transaction verification fails")
+            log("add_new_transaction", "transaction verification fails", "warning")
             return False
         self.unconfirmed_transactions.append(transaction)
         log("add_new_transaction", f'miner has {len(self.unconfirmed_transactions)} unconfirmed transactions')
