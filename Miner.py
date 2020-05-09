@@ -79,7 +79,7 @@ class Miner:
         if len(self.unconfirmed_transactions) >= self.blockchain.threshold and not self.state == "mining":
             log("add_new_transaction", "Create mining thread")
             self.mine()
-            self.state = "mining"
+
 
 
     def check_chain_validity(self, chain):
@@ -114,6 +114,7 @@ class Miner:
             and figuring out Proof Of Work or BFT.
             return true if done (pow or bft) or false if not
         """
+        self.state = "mining"
         if not self.unconfirmed_transactions:
             return False
         last_block = self.blockchain.get_last_block()
@@ -161,7 +162,6 @@ class Miner:
         if len(self.unconfirmed_transactions) >= self.blockchain.threshold and not self.state == "mining":
             self.got_notified = False
             self.mine()
-            self.state = "mining"
 
 
 
