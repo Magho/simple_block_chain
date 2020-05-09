@@ -25,7 +25,7 @@ app = Flask(__name__)
 
 blockchain = Blockchain()
 test_names = ["special miner", "a miner"]
-test_ips = ["http://192.168.1.108:5000", "http://192.168.1.108:5001"]#["http://197.55.175.10:5000", "http://192.168.1.108:5001"]#
+test_ips = ["http://197.55.175.10:5000", "http://192.168.1.108:5001"]#["http://192.168.1.108:5000", "http://192.168.1.108:5001"]
 test_ports = [5000, 5001]
 test = 0
 miner = Miner(test_names[test], 0)

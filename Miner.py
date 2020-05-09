@@ -53,6 +53,7 @@ class Miner:
             block.nonce += 1
             computed_hash = block.compute_hash()
         if self.got_notified:
+            log("proof_of_work", "got notified and may have been stopped mining")
             self.got_notified = False
         return computed_hash
 
@@ -145,17 +146,22 @@ class Miner:
 
 
     def get_notified(self, block):
+        log("get_notified", f"got notified for new block: {block.__dict__}")
         if self.state == "mining":
+            log("get_notified", f"miner was mining. miner is told to stop.")
             self.got_notified = True
             self.state = "idle"
 
         self.unconfirmed_transactions = transactions_difference(self.unconfirmed_transactions, block.transactions)
         self.unconfirmed_transactions = self.unconfirmed_transactions + transactions_difference(self.unconfirmed_transactions_in_progress, block.transactions)
         self.unconfirmed_transactions_in_progress = []
+        log("get_notified", f"check unconfirmed transactions length and state.")
+        log("get_notified", f"len(self.unconfirmed_transactions) >= self.blockchain.threshold ? {len(self.unconfirmed_transactions) >= self.blockchain.threshold}")
+        log("get_notified", f"self.state == 'mining' ? {self.state == 'mining'}")
         if len(self.unconfirmed_transactions) >= self.blockchain.threshold and not self.state == "mining":
-            thread = threading.Thread(target=self.mine)
+            self.got_notified = False
+            self.mine()
             self.state = "mining"
-            self.mining_task = thread.start()
 
 
 

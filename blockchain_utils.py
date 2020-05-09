@@ -95,7 +95,7 @@ def announce_new_transaction(transaction, peers):
     for peer in peers:
         log("announce_new_transaction", f"inform node {peer}")
         url = f'{peer}/new_transaction'
-        thread = threading.Thread(send_transaction(url, data, headers))
+        thread = threading.Thread(target=send_transaction, args=(url, data, headers,))
         threads.append(thread)
         thread.start()
     return threads

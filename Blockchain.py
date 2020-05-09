@@ -5,7 +5,7 @@ from utils import contains_in_list, index, delete, log
 
 class Blockchain:
 
-    def __init__(self, difficulty=5, threshold=1):
+    def __init__(self, difficulty=3, threshold=1):
         """
             it contain
             * difficulty
