@@ -79,7 +79,6 @@ class Miner:
             log("add_new_transaction", "Create mining thread")
             self.mine()
             self.state = "mining"
-            log("add_new_transaction", f"mining task: {self.mining_task}")
 
 
     def check_chain_validity(self, chain):
