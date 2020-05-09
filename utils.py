@@ -59,3 +59,14 @@ def log(function_name, message, message_type="debug"):
         logger.error(message)
     else:
         logger.error("message type is not clear!")
+
+
+def is_equal_blocks(b1, b2):
+    return b1.hash == b2.hash and b1.previous_hash == b2.previous_hash
+
+
+def are_equal_chains(chain1, chain2):
+    for i, j in zip(chain1, chain2):
+        if not is_equal_blocks(i, j):
+            return False
+    return True

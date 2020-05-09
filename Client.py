@@ -32,13 +32,13 @@ class Client:
         self.chain = None
         self.original = name_in == 0
 
-    def make_transaction(self, value_in, recipient_in):
+    def make_transaction(self, value_in, recipient_in, mode="pow"):
         """
         :param value_in:
         :param recipient_in:
         :return:
         """
-        self.get_utxo_pool()
+        self.get_utxo_pool(mode)
         log("make_transaction", f"value of transaction {value_in}, current utxo pool {self.utxo_pool}")
         transaction = Transaction(time.time(), value_in, self.public_key, recipient_in, self.utxo_pool, is_original=self.original)
         to_sign = hashlib.sha256(str(transaction.hash).encode() + jsonpickle.encode(transaction.recipients).encode()).hexdigest().encode()
@@ -50,7 +50,7 @@ class Client:
         return transaction
 
 
-    def get_utxo_pool(self):
+    def get_utxo_pool(self, mode="pow"):
         """
         get chain
         loop transaction
@@ -61,7 +61,7 @@ class Client:
             # return as it is original client has no pool and no check
             return
         blockchain = Blockchain()
-        blockchain = consensus(blockchain, self.peers)
+        blockchain = consensus(blockchain, self.peers, mode=mode)
         log("get_utxo_pool", f'blockchain chain: {blockchain.chain}')
         self.utxo_pool = []
         for block in blockchain.chain:

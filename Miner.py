@@ -65,26 +65,43 @@ class Miner:
         # Todo
         pass
 
-    def add_new_transaction(self, transaction):
+    def add_new_transaction(self, transaction, mode="pow"):
         """
             add received transaction to the list of received transactions
         """
-        log("add_new_transaction", f"New transaction is being added: {transaction.__dict__}")
-        if not self.verify_transaction(transaction):
-            log("add_new_transaction", "transaction verification fails", "warning")
-            return False
-        self.unconfirmed_transactions.append(transaction)
-        log("add_new_transaction", f'miner has {len(self.unconfirmed_transactions)} unconfirmed transactions')
-        self.lock.acquire()
-        log("add_new_transaction", f'Mining condition: #transactions >= threshold ? {len(self.unconfirmed_transactions) >= self.blockchain.threshold} , is mining ? {self.state == "mining"}' )
-        if len(self.unconfirmed_transactions) >= self.blockchain.threshold and not self.state == "mining":
-            log("add_new_transaction", "Create mining thread")
-            thread = threading.Thread(target=self.mine)
-            self.state = "mining"
-            self.mining_task = thread.start()
-            log("add_new_transaction", f"mining task: {self.mining_task}")
-        self.lock.release()
-
+        if mode == "pow":
+            log("add_new_transaction", f"New transaction is being added: {transaction.__dict__}")
+            if not self.verify_transaction(transaction):
+                log("add_new_transaction", "transaction verification fails", "warning")
+                return False
+            self.unconfirmed_transactions.append(transaction)
+            log("add_new_transaction", f'miner has {len(self.unconfirmed_transactions)} unconfirmed transactions')
+            self.lock.acquire()
+            log("add_new_transaction", f'Mining condition: #transactions >= threshold ? {len(self.unconfirmed_transactions) >= self.blockchain.threshold} , is mining ? {self.state == "mining"}' )
+            if len(self.unconfirmed_transactions) >= self.blockchain.threshold and not self.state == "mining":
+                log("add_new_transaction", "Create mining thread")
+                thread = threading.Thread(target=self.mine)
+                self.state = "mining"
+                self.mining_task = thread.start()
+                log("add_new_transaction", f"mining task: {self.mining_task}")
+            self.lock.release()
+        elif mode == "bft":
+            log("add_new_transaction", f"New transaction is being added: {transaction.__dict__}")
+            if not self.verify_transaction(transaction):
+                log("add_new_transaction", "transaction verification fails", "warning")
+                return False
+            self.unconfirmed_transactions.append(transaction)
+            while len(self.unconfirmed_transactions) >= self.blockchain.threshold:
+                self.unconfirmed_transactions_in_progress, self.unconfirmed_transactions = self.get_transactions_tobe_mined()
+                last_block = self.blockchain.get_last_block()
+                new_block = Block(index=last_block.index + 1,
+                                  transactions=self.unconfirmed_transactions_in_progress,
+                                  timestamp=time.time(),
+                                  previous_hash=last_block.hash)
+                new_block.hash = new_block.compute_hash()
+                added = self.blockchain.add_block(new_block, None, mode="bft")
+                if not added:
+                    log("add_new_transaction", "the block is not added magically!", "error")
 
     def check_chain_validity(self, chain):
         """

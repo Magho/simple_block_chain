@@ -39,8 +39,8 @@ for line in lines:
             if recipient_id not in clients.keys():
                 clients[recipient_id] = Client(recipient_id, peers)
             recipients.append(clients[recipient_id].public_key)
-    transaction = sender.make_transaction(values, recipients)
-    announce_new_transaction(transaction, peers)
+    transaction = sender.make_transaction(values, recipients, mode="bft")
+    announce_new_transaction(transaction, [special_miner])
 
 
 

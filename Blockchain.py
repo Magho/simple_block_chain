@@ -39,7 +39,7 @@ class Blockchain:
         return (block_hash.startswith('0' * self.difficulty) and
                 block_hash == block.compute_hash())
 
-    def add_block(self, block, proof):
+    def add_block(self, block, proof, mode="pow"):
         """
             A function that adds the block to the chain after verification.
             Verification includes:
@@ -50,31 +50,49 @@ class Blockchain:
             * verify transactions
             return True if valid or False if not valid
         """
-        previous_hash = self.get_last_block().hash
-        log("add_block", f"add block {block.__dict__} with proof {proof}")
-        if previous_hash != block.previous_hash:
-            log("add_block", f"block will not be added: current last block previous hash: {previous_hash}, the new "
-                             f"block previous hash:  {block.previous_hash}", "warning")
-            return False
-
-        if block.transactions_length != self.threshold:
-            log("add_block", f"block will not be added: transactions length {block.transactions_length} does not reach threshold")
-            return False
-
-        if not self.is_valid_proof(block, proof):
-            log("add_block", f"block will not be added: not valid proof {proof}")
-            return False
-        log("add_block", f"check transactions in the block")
-        for transaction in block.transactions:
-            log("add_block",  f"check transaction: {transaction.__dict__}")
-            verified = self.verify_transaction(transaction)
-            log("add_block", f"is verified? {verified}")
-            if not verified:
+        if mode == "pow":
+            previous_hash = self.get_last_block().hash
+            log("add_block", f"add block {block.__dict__} with proof {proof}")
+            if previous_hash != block.previous_hash:
+                log("add_block", f"block will not be added: current last block previous hash: {previous_hash}, the new "
+                                 f"block previous hash:  {block.previous_hash}", "warning")
                 return False
-        block.hash = proof
-        self.chain.append(block)
-        return True
 
+            if block.transactions_length != self.threshold:
+                log("add_block", f"block will not be added: transactions length {block.transactions_length} does not reach threshold")
+                return False
+
+            if not self.is_valid_proof(block, proof):
+                log("add_block", f"block will not be added: not valid proof {proof}")
+                return False
+            log("add_block", f"check transactions in the block")
+            for transaction in block.transactions:
+                log("add_block",  f"check transaction: {transaction.__dict__}")
+                verified = self.verify_transaction(transaction)
+                log("add_block", f"is verified? {verified}")
+                if not verified:
+                    return False
+            block.hash = proof
+            self.chain.append(block)
+            return True
+        elif mode == "bft":
+            previous_hash = self.get_last_block().hash
+            if previous_hash != block.previous_hash:
+                log("add_block", f"block will not be added: current last block previous hash: {previous_hash}, the new "
+                                 f"block previous hash:  {block.previous_hash}", "warning")
+                return False
+            if block.transactions_length != self.threshold:
+                log("add_block", f"block will not be added: transactions length {block.transactions_length} does not reach threshold")
+                return False
+            log("add_block", f"check transactions in the block")
+            for transaction in block.transactions:
+                log("add_block", f"check transaction: {transaction.__dict__}")
+                verified = self.verify_transaction(transaction)
+                log("add_block", f"is verified? {verified}")
+                if not verified:
+                    return False
+                self.chain.append(block)
+                return True
     def get_last_block(self):
         """
             return last block of the chain

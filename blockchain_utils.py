@@ -1,11 +1,12 @@
 import json
+import math
 
 import jsonpickle
 import requests
 
 from Block import Block
 from Blockchain import Blockchain
-from utils import log
+from utils import log, are_equal_chains
 
 
 def create_chain_from_dump(chain_dump, threshold=400, difficulty=2):
@@ -47,28 +48,46 @@ def check_chain_validity(blockchain, chain):
     return result
 
 
-def consensus(blockchain, peers):
+def consensus(blockchain, peers, mode="pow"):
     """
     Our simple consensus algorithm. If a longer valid chain is
     found, our chain is replaced with it.
     """
-    log("consensus", "begin consensus")
-    longest_chain = None
-    current_len = len(blockchain.chain)
-    for node in peers:
-        log("consensus", f'ask node: {node}')
-        response = requests.get(f'{node}/chain')# IP_peer:port/chain
-        length = response.json()['length']
-        chain = jsonpickle.decode(response.json()['chain'])
-        log("consensus", f'chain got: {chain} from node {node}')
-        if length > current_len and check_chain_validity(blockchain, chain):
-            log("consensus", f'chain of node {node} is valid and longer chain. updating chain')
-            current_len = length
-            longest_chain = chain
-    if longest_chain:
-        blockchain.chain = longest_chain
+    if mode == "pow":
+        log("consensus", "begin consensus")
+        longest_chain = None
+        current_len = len(blockchain.chain)
+        for node in peers:
+            log("consensus", f'ask node: {node}')
+            response = requests.get(f'{node}/chain')# IP_peer:port/chain
+            length = response.json()['length']
+            chain = jsonpickle.decode(response.json()['chain'])
+            log("consensus", f'chain got: {chain} from node {node}')
+            if length > current_len and check_chain_validity(blockchain, chain):
+                log("consensus", f'chain of node {node} is valid and longer chain. updating chain')
+                current_len = length
+                longest_chain = chain
+        if longest_chain:
+            blockchain.chain = longest_chain
+            return blockchain
         return blockchain
-    return blockchain
+    elif mode == "bft":
+        chains = []
+        for node in peers:
+            log("consensus", f'ask node: {node}')
+            response = requests.get(f'{node}/chain')# IP_peer:port/chain
+            chain = jsonpickle.decode(response.json()['chain'])
+            chains.append(chain)
+        voter_numbers = len(chains)
+        minimum_vote = math.ceil(voter_numbers / 2)
+        for chain1 in chains:
+            vote = 0
+            for chain2 in chains:
+                if are_equal_chains(chain1, chain2):
+                    vote += 1
+            if vote >= minimum_vote:
+                blockchain.chain = chain1
+                return blockchain
 
 def get_peers(peer):
     """
@@ -92,7 +111,7 @@ def announce_new_transaction(transaction, peers):
     data = {"transaction": jsonpickle.encode(transaction)}
     for peer in peers:
         log("announce_new_transaction", f"inform node {peer}")
-        url = f'{peer}/new_transaction'
+        url = f'{peer}/new_transaction_special_miner'
         requests.post(url, data=json.dumps(data), headers=headers)
 
 

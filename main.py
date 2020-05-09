@@ -80,15 +80,49 @@ def new_transaction():
 
     return "Success", 200
 
+@app.route('/new_transaction_special_miner', methods=['POST'])
+def new_transaction_special_miner():
+
+    tx_data = request.get_json()
+    log("new_transaction", f"request data: {tx_data}")
+    required_fields = ["transaction"]
+    if not all(k in tx_data for k in required_fields):
+        return 'Invalid transaction data', 404
+
+    transaction = jsonpickle.decode(tx_data["transaction"])
+    headers = {'Content-Type': "application/json"}
+    data = {"transaction": jsonpickle.encode(transaction)}
+    for peer in peers:
+        url = f'{peer}/new_transaction_BFT'
+        requests.post(url, data=json.dumps(data), headers=headers)
+    log("new_transaction", f"add new transaction bft")
+    miner.add_new_transaction(transaction, mode="bft")
+    return "Success", 200
+
+
+@app.route('/new_transaction_BFT', methods=['POST'])
+def new_transaction_BFT():
+    tx_data = request.get_json()
+    log("new_transaction", f"request data: {tx_data}")
+    required_fields = ["transaction"]
+    if not all(k in tx_data for k in required_fields):
+        return 'Invalid transaction data', 404
+    transaction = jsonpickle.decode(tx_data["transaction"])
+    miner.add_new_transaction(transaction, mode="bft")
+    return "Success", 200
+
+
 @app.route('/chain_peers', methods=['GET'])
 def get_chain_peers():
     chain_data = jsonpickle.encode(blockchain.chain)
     return json.dumps({"length": len(blockchain.chain), "chain": chain_data, "peers": list(peers), "threshold": blockchain.threshold, "difficulty" : blockchain.difficulty}), 200
 
+
 @app.route('/peers', methods=['GET'])
 def get_peers():
     peers_data = jsonpickle.encode(peers)
     return json.dumps({"peers": peers_data}), 200
+
 
 @app.route('/chain', methods=['GET'])
 def get_chain():
