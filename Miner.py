@@ -36,8 +36,8 @@ class Miner:
         self.key = RSA.generate(1024, random_generator)  # Both Public & Private Keys
         self.public_key = self.key.publickey()  # For External Access
         self.state = "idle"
-        self.mining_task = None
         self.lock = threading.Lock()
+        self.got_notified = False
 
     def set_blockchain(self, blockchain):
         self.blockchain = blockchain
@@ -50,10 +50,11 @@ class Miner:
         """
         block.nonce = 0
         computed_hash = block.compute_hash()
-        while not computed_hash.startswith('0' * self.blockchain.difficulty):
+        while not computed_hash.startswith('0' * self.blockchain.difficulty) and not self.got_notified:
             block.nonce += 1
             computed_hash = block.compute_hash()
-
+        if self.got_notified:
+            self.got_notified = False
         return computed_hash
 
     def bft(self, block):
@@ -134,7 +135,6 @@ class Miner:
                 log("mine", f'mine new block')
                 self.mine()
             self.state = "idle"
-            self.mining_task = None
             return
         log("mine", f'block {new_block.__dict__} is mined and added locally successfully!')
         chain_length = len(self.blockchain.chain)
@@ -147,13 +147,13 @@ class Miner:
                 self.mine()
         log("mine", f'no enough transaction to mine convert to idle state')
         self.state = "idle"
-        self.mining_task = None
 
 
     def get_notified(self, block):
         if self.state == "mining":
+            self.got_notified = True
             self.state = "idle"
-            self.mining_task.stop()
+
         self.unconfirmed_transactions = transactions_difference(self.unconfirmed_transactions, block.transactions)
         self.unconfirmed_transactions = self.unconfirmed_transactions + transactions_difference(self.unconfirmed_transactions_in_progress, block.transactions)
         self.unconfirmed_transactions_in_progress = []
