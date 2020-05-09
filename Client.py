@@ -9,7 +9,8 @@ from Blockchain import Blockchain
 from Transaction import Transaction
 from UTXO import UTXO
 from blockchain_utils import consensus
-from utils import contains_in_list, delete, index
+from utils import contains_in_list, delete, index, log
+
 
 class Client:
 
@@ -38,13 +39,12 @@ class Client:
         :return:
         """
         self.get_utxo_pool()
-
-        print(f'value of transaction: {value_in}, {self.utxo_pool}')
+        log("make_transaction", f"value of transaction {value_in}, current utxo pool {self.utxo_pool}")
         transaction = Transaction(time.time(), value_in, self.public_key, recipient_in, self.utxo_pool, is_original=self.original)
         to_sign = hashlib.sha256(str(transaction.hash).encode() + jsonpickle.encode(transaction.recipients).encode()).hexdigest().encode()
-        print(f'-make_transaction: transaction hash = {transaction.hash}, recipients = {transaction.recipients}')
-        print(f'sign transaction: {to_sign}')
-        print(f'sender key {self.public_key.e}, {self.public_key.n}')
+        log("make_transaction", f"transaction hash: {transaction.hash}, transaction recipients: {transaction.recipients}")
+        log("make_transaction", f"sign transaction, string to sign: {to_sign}")
+        log("make_transaction", f"sender key: e: {self.public_key.e}, n: {self.public_key.n}")
         signature = self.key.sign(to_sign, '')
         transaction.set_signature(signature)
         return transaction
@@ -62,7 +62,7 @@ class Client:
             return
         blockchain = Blockchain()
         blockchain = consensus(blockchain, self.peers)
-        print(f'blockchain chain: {blockchain.chain}')
+        log("get_utxo_pool", f'blockchain chain: {blockchain.chain}')
         self.utxo_pool = []
         for block in blockchain.chain:
             for tx in block.transactions:

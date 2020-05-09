@@ -8,7 +8,7 @@ from UTXO import UTXO
 import threading
 
 from blockchain_utils import consensus, announce_new_block
-from utils import transactions_difference, contains_in_list, delete, index
+from utils import transactions_difference, contains_in_list, delete, index, log
 
 
 class Miner:
@@ -68,19 +68,20 @@ class Miner:
         """
             add received transaction to the list of received transactions
         """
-        print("New transaction is being added: " + str(transaction.__dict__))
+        log("add_new_transaction", f"New transaction is being added: {transaction.__dict__}")
         if not self.verify_transaction(transaction):
-            print("transaction signature verification fails")
+            log("add_new_transaction", "transaction verification fails")
             return False
         self.unconfirmed_transactions.append(transaction)
-        print(f'miner has {len(self.unconfirmed_transactions)} unconfirmed transactions')
+        log("add_new_transaction", f'miner has {len(self.unconfirmed_transactions)} unconfirmed transactions')
         self.lock.acquire()
-        print(f'Mining condition: #transactions >= threshold ? {len(self.unconfirmed_transactions) >= self.blockchain.threshold} , is mining ? {self.state == "mining"}' )
+        log("add_new_transaction", f'Mining condition: #transactions >= threshold ? {len(self.unconfirmed_transactions) >= self.blockchain.threshold} , is mining ? {self.state == "mining"}' )
         if len(self.unconfirmed_transactions) >= self.blockchain.threshold and not self.state == "mining":
-            print("Create mining thread")
+            log("add_new_transaction", "Create mining thread")
             thread = threading.Thread(target=self.mine)
             self.state = "mining"
             self.mining_task = thread.start()
+            log("add_new_transaction", f"mining task: {self.mining_task}")
         self.lock.release()
 
 
@@ -128,22 +129,23 @@ class Miner:
 
         added = self.blockchain.add_block(new_block, proof)
         if not added:
+            log("mine", "the block is not added even the miner mine it. the block chain last block may have been changed", "error")
             if len(self.unconfirmed_transactions) >= self.blockchain.threshold:
-                print(f'mine new block')
+                log("mine", f'mine new block')
                 self.mine()
             self.state = "idle"
             self.mining_task = None
             return
-        print(f'block {new_block.__dict__} is mined and added locally successfully!')
+        log("mine", f'block {new_block.__dict__} is mined and added locally successfully!')
         chain_length = len(self.blockchain.chain)
         self.blockchain = consensus(self.blockchain, self.peers)
         if chain_length == len(self.blockchain.chain):
             announce_new_block(self.blockchain.get_last_block(), self.peers)
-            print(f'block {new_block.__dict__} is announced successfully!')
+            log("mine", f'block {new_block.__dict__} is announced successfully!')
             if len(self.unconfirmed_transactions) >= self.blockchain.threshold:
-                print(f'mine new block')
+                log("mine", f'mine new block')
                 self.mine()
-        print(f'no enough transaction to mine convert to idle state')
+        log("mine", f'no enough transaction to mine convert to idle state')
         self.state = "idle"
         self.mining_task = None
 
@@ -218,31 +220,31 @@ class Miner:
         :return true if transaction is valid:
         """
         verified = transaction.verify(transaction.sender)
-        print(f'transaction verified? {verified}')
+        log("verify_transaction", f'transaction verified? {verified}')
         if not verified:
             return False
-        print("sender is verified successfully!")
-        print(f"is original transaction? {transaction.is_original}")
+        log("verify_transaction", "sender is verified successfully!")
+        log("verify_transaction", f"is original transaction? {transaction.is_original}")
         if transaction.is_original:
             return True
 
         input_sum = 0
-        print(f"getting utxo pool to sender {transaction.sender.e}, {transaction.sender.n}")
+        log("verify_transaction", f"getting utxo pool to sender {transaction.sender.e}, {transaction.sender.n}")
         utxo_pool = self.get_utxo_pool(transaction.sender)
-        print(f"check utxo inputs")
+        log("verify_transaction", f"check utxo inputs")
         for input_utxo in transaction.inputs:
-            print(f"check input {input_utxo.__dict__}")
+            log("verify_transaction", f"check input {input_utxo.__dict__}")
             input_sum += input_utxo.value
-            print(f"is input in utxo pool? {contains_in_list(utxo_pool, input_utxo)}")
+            log("verify_transaction", f"is input in utxo pool? {contains_in_list(utxo_pool, input_utxo)}")
             if not contains_in_list(utxo_pool, input_utxo):
                 return False
-        print(f"input sum used: {input_sum}")
+        log("verify_transaction", f"input sum used: {input_sum}")
         output_sum = 0
-        print(f"check utxo outputs")
+        log("verify_transaction", f"check utxo outputs")
         for output_utxo in transaction.outputs:
-            print(f"check output {output_utxo.__dict__}")
+            log("verify_transaction", f"check output {output_utxo.__dict__}")
             output_sum += output_utxo.value
-        print(f"output sum: {output_sum}")
+        log("verify_transaction", f"output sum: {output_sum}")
         if output_sum > input_sum:
             return False
         return True
@@ -258,22 +260,22 @@ class Miner:
         utxo_pool = []
         for block in self.blockchain.chain:
             for tx in block.transactions:
-                print(f"checking transaction {tx.__dict__}")
-                print(f"is sender in recipients list? {contains_in_list(tx.recipients, sender)}")
+                log("get_utxo_pool", f"checking transaction {tx.__dict__}")
+                log("get_utxo_pool", f"is sender in recipients list? {contains_in_list(tx.recipients, sender)}")
                 if contains_in_list(tx.recipients, sender):
                     i = index(tx.recipients, sender)
                     if i == -1:
                         raise Exception("public key is not found!!")
-                    print(f"index of sender is found at {i}")
+                    log("get_utxo_pool", f"index of sender is found at {i}")
                     new_UTXO = UTXO(tx.hash, i, tx.values[i], tx.recipients[i])
                     utxo_pool.append(new_UTXO)
                 inputs = tx.inputs
-                print(f"check transaction input")
+                log("get_utxo_pool", f"check transaction input")
                 for utxo_input in inputs:
-                    print(f"check utxo input {utxo_input.__dict__}")
-                    print(f"is input in utxo pool? {contains_in_list(utxo_pool, utxo_input)}")
+                    log("get_utxo_pool", f"check utxo input {utxo_input.__dict__}")
+                    log("get_utxo_pool", f"is input in utxo pool? {contains_in_list(utxo_pool, utxo_input)}")
                     if contains_in_list(utxo_pool, utxo_input):
-                        print(f"remove input utxo from utxo pool")
+                        log("get_utxo_pool", f"remove input utxo from utxo pool")
                         utxo_pool = delete(utxo_pool, utxo_input)
-        print(f"utxo pool resulted: {utxo_pool}")
+        log("get_utxo_pool", f"utxo pool resulted: {utxo_pool}")
         return utxo_pool

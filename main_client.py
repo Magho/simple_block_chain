@@ -8,19 +8,20 @@ import time
 
 from Client import Client
 from blockchain_utils import announce_new_transaction, get_peers
+from utils import log
 
 clients = {}
 peers = set()
-special_miner = "http://197.160.27.226:5000"
+special_miner = "http://192.168.1.108:5000"#"http://197.160.27.226:5000"
 peers.add(special_miner)
 clients[0] = Client(0, peers) # 0 is the original client
 f = open("TxDataset/txdataset.txt", "r")
 lines = f.readlines()
 for line in lines:
     peers.update(get_peers(special_miner))
-    print(peers)
+    log("main_client", f"current peers = {peers}")
     parameters = line.split("\t")
-    print(parameters)
+    log("main_client", f"current parameters = {parameter}")
     sender = None
     recipients = []
     values = []
@@ -28,6 +29,7 @@ for line in lines:
         if 'intput' in parameter:
             sender_id = int(parameter[parameter.index(":") + 1:])
             if sender_id not in clients.keys():
+                log("main_client", f"sender id: {sender_id} doesn't exist!", "error")
                 raise Exception("Sender doesn't exist")
             sender = clients[sender_id]
         if 'value' in parameter:

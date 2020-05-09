@@ -1,4 +1,15 @@
+import os
+import sys
+
 import jsonpickle
+import logging
+logging.addLevelName(logging.DEBUG, 'D')
+logging.addLevelName(logging.WARNING, 'W')
+logging.addLevelName(logging.ERROR, 'E')
+logging.basicConfig(format='%(levelname)s:[%(threadName)s,%(name)s] %(message)s', level=logging.DEBUG, handlers=[logging.StreamHandler(sys.stdout)])
+
+
+
 
 
 def transactions_difference(transactions1, transactions2):
@@ -36,3 +47,15 @@ def index(list, object):
         if element_encoding == object_encoding:
             return i
     return -1
+
+
+def log(function_name, message, message_type="debug"):
+    logger = logging.getLogger(function_name)
+    if message_type == "debug":
+        logger.debug(message)
+    elif message_type == "warning":
+        logger.warning(message)
+    elif message_type == "error":
+        logger.error(message)
+    else:
+        logger.error("message type is not clear!")

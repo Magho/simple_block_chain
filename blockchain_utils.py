@@ -5,6 +5,7 @@ import requests
 
 from Block import Block
 from Blockchain import Blockchain
+from utils import log
 
 
 def create_chain_from_dump(chain_dump, threshold=400, difficulty=2):
@@ -51,16 +52,17 @@ def consensus(blockchain, peers):
     Our simple consensus algorithm. If a longer valid chain is
     found, our chain is replaced with it.
     """
+    log("consensus", "begin consensus")
     longest_chain = None
     current_len = len(blockchain.chain)
     for node in peers:
-        print(f'consensus node: {node}')
+        log("consensus", f'ask node: {node}')
         response = requests.get(f'{node}/chain')# IP_peer:port/chain
         length = response.json()['length']
         chain = jsonpickle.decode(response.json()['chain'])
-        print(f'chain of consensus: {chain}')
+        log("consensus", f'chain got: {chain} from node {node}')
         if length > current_len and check_chain_validity(blockchain, chain):
-            print(f'update chain: {chain}')
+            log("consensus", f'chain of node {node} is valid and longer chain. updating chain')
             current_len = length
             longest_chain = chain
     if longest_chain:
@@ -89,7 +91,7 @@ def announce_new_transaction(transaction, peers):
     headers = {'Content-Type': "application/json"}
     data = {"transaction": jsonpickle.encode(transaction)}
     for peer in peers:
-        print(peer)
+        log("announce_new_transaction", f"inform node {peer}")
         url = f'{peer}/new_transaction'
         requests.post(url, data=json.dumps(data), headers=headers)
 

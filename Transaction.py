@@ -12,6 +12,7 @@ import hashlib
 import jsonpickle
 
 from UTXO import UTXO
+from utils import log
 
 
 class Transaction:
@@ -52,17 +53,17 @@ class Transaction:
         """
         inputs = []
         inputs_sum = 0
-        print(f"getting inputs: values{self.values}, sum of values {sum(self.values)}")
+        log("get_inputs", f"values in transaction: {self.values}, its sum: {sum(self.values)}")
         for u in list(utxo_pool):
-            print(f"spending utxo {u.__dict__}")
+            log("get_inputs", f"spending utxo {u.__dict__}")
             # Add UTXO to Transaction Inputs
             inputs.append(u)
             inputs_sum += u.value
 
             # Remove from UTXO Pool - Eliminates 'Double Spend' Problem
             utxo_pool.remove(u)
-            print(f"current utxo pool: {utxo_pool}")
-            print(f"current input sum = {inputs_sum}, is sufficient? {inputs_sum >= sum(self.values)}")
+            log("get_inputs", f"current utxo pool: {utxo_pool}")
+            log("get_inputs", f"current input sum = {inputs_sum}, is sufficient? {inputs_sum >= sum(self.values)}")
             # Check If We're Done Adding Transaction Inputs
             if inputs_sum >= sum(self.values):
                 break
@@ -116,10 +117,10 @@ class Transaction:
         self.signature = signature
 
     def verify(self, sender):
-        print(f'-verify: transaction hash = {self.hash}, recipients = {self.recipients}')
+        log("verify", f'transaction hash = {self.hash}, recipients = {self.recipients}')
         to_verify = hashlib.sha256(str(self.hash).encode() + jsonpickle.encode(self.recipients).encode()).hexdigest().encode()
-        print(f'verify transaction {to_verify}')
-        print(f'sender key {sender.e}, {sender.n}')
-        print(f'verified? {sender.verify(to_verify, self.signature)}')
+        log("verify", f'string to be verified: {to_verify}')
+        log("verify", f'sender key e: {sender.e}, n: {sender.n}')
+        log("verify", f'verified? {sender.verify(to_verify, self.signature)}')
         return self.sender.verify(to_verify, self.signature)
 

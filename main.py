@@ -19,25 +19,31 @@ from Transaction import Transaction
 from blockchain_utils import *
 import jsonpickle
 
+from utils import log
+
 app = Flask(__name__)
 
 blockchain = Blockchain()
-miner = Miner("a miner", 0)
-my_node_address = "http://197.55.175.10:5001"
+test_names = ["special miner", "a miner"]
+test_ips = ["http://192.168.1.108:5000", "http://192.168.1.108:5001"]
+test_ports = [5000, 5001]
+test = 1
+miner = Miner(test_names[test], 0)
+my_node_address = test_ips[test]#"http://192.168.1.108:5001"#"http://197.55.175.10:5000"
 # Address format : http://IP:port
 peers = set()
 if miner.name != "special miner":
-    node_address = "http://197.160.27.226:5000"#"http://102.40.55.128:5000" # Special miner
+    node_address = "http://192.168.1.108:5000"#"http://197.160.27.226:5000"#"http://102.40.55.128:5000" # Special miner
     peers.add(node_address)
     if not node_address:
-        print("ERROR!")
+        log("main_miner", "Special miner address is not specified!", "error")
         raise Exception("Node address is not specified!")
 
     data = {"node_address": my_node_address}
     headers = {'Content-Type': "application/json"}
     response = requests.post(node_address + "/register_node", data=json.dumps(data), headers=headers)
-    print(response.__dict__)
-    print(response.json())
+    log("main_miner", f"response of special miner: {response.__dict__}")
+    log("main_miner", f"response of special miner(json): {response.json()}")
     chain = jsonpickle.decode(response.json()['chain'])
     threshold = response.json()['threshold']
     difficulty = response.json()['difficulty']
@@ -53,7 +59,7 @@ if miner.name != "special miner":
     blockchain = consensus(blockchain, peers)
 
     if blockchain is None:
-        print("ERROR, block chain is none!")
+        log("main_miner", "Blockchain of consensus is None!", "error")
         raise Exception("None blockchain!")
 else:
     blockchain.create_genesis_block()
@@ -64,7 +70,7 @@ miner.set_blockchain(blockchain)
 @app.route('/new_transaction', methods=['POST'])
 def new_transaction():
     tx_data = request.get_json()
-    print(tx_data)
+    log("new_transaction", f"request data: {tx_data}")
     required_fields = ["transaction"]
     if not all(k in tx_data for k in required_fields):
         return 'Invalid transaction data', 404
@@ -117,5 +123,5 @@ def get_pending_tx():
     return jsonpickle.encode(miner.unconfirmed_transactions)
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5001)
+    app.run(host='0.0.0.0', port=test_ports[test])
 

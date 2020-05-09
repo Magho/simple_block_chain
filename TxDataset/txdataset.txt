@@ -1,3 +1,9 @@
-48	intput:0	value:74.382126	output:48
-49	intput:0	value:81.75023	output:49
-49	intput:48	value:81.75023	output:49
+1	intput:0	value:15.2479	output:1
+2	intput:0	value:10000	output:2
+3	intput:1	value:10	output:2
+4	intput:1	value:10	output:3
+5	intput:2	value:5	output:3
+6	intput:0	value:10	output:4
+7	intput:4	value:10	output:3
+8	intput:3	value:10	output:4
+9	intput:3	value1:2.5	output1:1	value2:2.5	output2:2
