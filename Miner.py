@@ -36,7 +36,6 @@ class Miner:
         self.key = RSA.generate(1024, random_generator)  # Both Public & Private Keys
         self.public_key = self.key.publickey()  # For External Access
         self.state = "idle"
-        self.lock = threading.Lock()
         self.got_notified = False
 
     def set_blockchain(self, blockchain):
@@ -75,15 +74,12 @@ class Miner:
             return False
         self.unconfirmed_transactions.append(transaction)
         log("add_new_transaction", f'miner has {len(self.unconfirmed_transactions)} unconfirmed transactions')
-        self.lock.acquire()
         log("add_new_transaction", f'Mining condition: #transactions >= threshold ? {len(self.unconfirmed_transactions) >= self.blockchain.threshold} , is mining ? {self.state == "mining"}' )
         if len(self.unconfirmed_transactions) >= self.blockchain.threshold and not self.state == "mining":
             log("add_new_transaction", "Create mining thread")
-            thread = threading.Thread(target=self.mine)
+            self.mine()
             self.state = "mining"
-            self.mining_task = thread.start()
             log("add_new_transaction", f"mining task: {self.mining_task}")
-        self.lock.release()
 
 
     def check_chain_validity(self, chain):
@@ -157,12 +153,10 @@ class Miner:
         self.unconfirmed_transactions = transactions_difference(self.unconfirmed_transactions, block.transactions)
         self.unconfirmed_transactions = self.unconfirmed_transactions + transactions_difference(self.unconfirmed_transactions_in_progress, block.transactions)
         self.unconfirmed_transactions_in_progress = []
-        self.lock.acquire()
         if len(self.unconfirmed_transactions) >= self.blockchain.threshold and not self.state == "mining":
             thread = threading.Thread(target=self.mine)
             self.state = "mining"
             self.mining_task = thread.start()
-        self.lock.release()
 
 
 

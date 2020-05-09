@@ -12,7 +12,7 @@ from utils import log
 
 clients = {}
 peers = set()
-special_miner = "http://192.168.1.108:5000"#"http://197.160.27.226:5000"
+special_miner = "http://192.168.1.108:5000"#"http://197.55.175.10:5000"##"http://197.160.27.226:5000"
 peers.add(special_miner)
 clients[0] = Client(0, peers) # 0 is the original client
 f = open("TxDataset/txdataset.txt", "r")
@@ -40,7 +40,8 @@ for line in lines:
                 clients[recipient_id] = Client(recipient_id, peers)
             recipients.append(clients[recipient_id].public_key)
     transaction = sender.make_transaction(values, recipients)
-    announce_new_transaction(transaction, peers)
-
+    threads = announce_new_transaction(transaction, peers)
+    for thread in threads:
+        thread.join()
 
 

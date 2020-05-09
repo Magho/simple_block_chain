@@ -1,4 +1,5 @@
 import json
+import threading
 
 import jsonpickle
 import requests
@@ -90,10 +91,18 @@ def announce_new_block(block, peers):
 def announce_new_transaction(transaction, peers):
     headers = {'Content-Type': "application/json"}
     data = {"transaction": jsonpickle.encode(transaction)}
+    threads = []
     for peer in peers:
         log("announce_new_transaction", f"inform node {peer}")
         url = f'{peer}/new_transaction'
-        requests.post(url, data=json.dumps(data), headers=headers)
+        thread = threading.Thread(send_transaction(url, data, headers))
+        threads.append(thread)
+        thread.start()
+    return threads
+
+
+def send_transaction(url, data, headers):
+    requests.post(url, data=json.dumps(data), headers=headers)
 
 
 

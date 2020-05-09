@@ -25,7 +25,7 @@ app = Flask(__name__)
 
 blockchain = Blockchain()
 test_names = ["special miner", "a miner"]
-test_ips = ["http://192.168.1.108:5000", "http://192.168.1.108:5001"]
+test_ips = ["http://192.168.1.108:5000", "http://192.168.1.108:5001"]#["http://197.55.175.10:5000", "http://192.168.1.108:5001"]#
 test_ports = [5000, 5001]
 test = 0
 miner = Miner(test_names[test], 0)
@@ -33,7 +33,7 @@ my_node_address = test_ips[test]#"http://192.168.1.108:5001"#"http://197.55.175.
 # Address format : http://IP:port
 peers = set()
 if miner.name != "special miner":
-    node_address = "http://192.168.1.108:5000"#"http://197.160.27.226:5000"#"http://102.40.55.128:5000" # Special miner
+    node_address = "http://197.55.175.10:5000"#"http://192.168.1.108:5000"#"http://197.160.27.226:5000"#"http://102.40.55.128:5000" # Special miner
     peers.add(node_address)
     if not node_address:
         log("main_miner", "Special miner address is not specified!", "error")
@@ -123,5 +123,5 @@ def get_pending_tx():
     return jsonpickle.encode(miner.unconfirmed_transactions)
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=test_ports[test])
+    app.run(host='0.0.0.0', port=test_ports[test], threaded=True)
 
