@@ -58,14 +58,16 @@ class Client:
         get output transactions that has public key of client
         :return:
         """
+        self.total_number_messages += len(self.peers)
         if self.name == 0:
             # return as it is original client has no pool and no check
+            log("PERFORMANCE", f'Original client total number of message sent = {self.total_number_messages} messages')
             return
         blockchain = Blockchain()
         blockchain = consensus(blockchain, self.peers)
         self.total_number_messages += len(self.peers) * 2
         log("get_utxo_pool", f'blockchain chain: {blockchain.chain}')
-        log("PERFORMANCE", f'Average number of message sent per block = {self.total_number_messages / len(blockchain.chain)} messages/block')
+        log("PERFORMANCE", f'Average number of message sent per block for client {self.name} = {self.total_number_messages / len(blockchain.chain)} messages/block')
         self.utxo_pool = []
         for block in blockchain.chain:
             for tx in block.transactions:
