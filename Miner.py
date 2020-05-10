@@ -37,6 +37,9 @@ class Miner:
         self.public_key = self.key.publickey()  # For External Access
         self.state = "idle"
         self.got_notified = False
+        self.total_number_message = 0
+        self.total_number_stale_blocks = 0
+        self.total_time_used_in_mining = 0
 
     def set_blockchain(self, blockchain):
         self.blockchain = blockchain
@@ -47,11 +50,15 @@ class Miner:
             that satisfies our difficulty criteria.
             return computed hash
         """
+        start_time = time.time()
         block.nonce = 0
         computed_hash = block.compute_hash()
         while not computed_hash.startswith('0' * self.blockchain.difficulty) and not self.got_notified:
             block.nonce += 1
             computed_hash = block.compute_hash()
+        self.total_time_used_in_mining += (time.time() - start_time)
+        log("PERFORMANCE", f"total time used in mining = {self.total_time_used_in_mining} seconds")
+        log("PERFORMANCE", f"average time to mine a block {self.total_time_used_in_mining / (len(self.blockchain.chain) + 1)} second/block")
         if self.got_notified:
             log("proof_of_work", "got notified and may have been stopped mining")
             self.got_notified = False
@@ -128,6 +135,9 @@ class Miner:
         added = self.blockchain.add_block(new_block, proof)
         if not added:
             log("mine", "the block is not added even the miner mine it. the block chain last block may have been changed", "error")
+            self.total_number_stale_blocks += 1
+            log("PERFORMANCE", f"Number of stale blocks = {self.total_number_stale_blocks}, Average number of stale blocks per correctly mined block ")
+            log("PERFORMANCE", f"Average number of stale blocks per correctly mined blocks = {self.total_number_stale_blocks / len(self.blockchain.chain)}")
             if len(self.unconfirmed_transactions) >= self.blockchain.threshold:
                 log("mine", f'mine new block')
                 self.mine()
@@ -136,13 +146,16 @@ class Miner:
         log("mine", f'block {new_block.__dict__} is mined and added locally successfully!')
         chain_length = len(self.blockchain.chain)
         self.blockchain = consensus(self.blockchain, self.peers)
+        self.total_number_message += len(self.peers) * 2
         if chain_length == len(self.blockchain.chain):
             announce_new_block(self.blockchain.get_last_block(), self.peers)
             log("mine", f'block {new_block.__dict__} is announced successfully!')
+            self.total_number_message += len(self.peers)
             if len(self.unconfirmed_transactions) >= self.blockchain.threshold:
                 log("mine", f'mine new block')
                 self.mine()
         log("mine", f'no enough transaction to mine convert to idle state')
+        log("PERFORMANCE", f'Average number of message sent per block = {self.total_number_message / len(self.blockchain.chain)} messages/block')
         self.state = "idle"
 
 
