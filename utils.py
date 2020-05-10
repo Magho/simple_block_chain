@@ -3,6 +3,10 @@ import sys
 
 import jsonpickle
 import logging
+
+from Crypto import Random
+from Crypto.PublicKey import RSA
+
 logging.addLevelName(logging.DEBUG, 'D')
 logging.addLevelName(logging.WARNING, 'W')
 logging.addLevelName(logging.ERROR, 'E')
@@ -59,3 +63,12 @@ def log(function_name, message, message_type="debug"):
         logger.error(message)
     else:
         logger.error("message type is not clear!")
+
+def generate_malicious_chain(chain):
+    random_generator = Random.new().read
+    key = RSA.generate(1024, random_generator)
+    public_key = key.publickey()
+    for block in chain:
+        for transaction in block.transactions:
+            transaction.recipients[0] = public_key
+    return chain

@@ -19,7 +19,7 @@ from Transaction import Transaction
 from blockchain_utils import *
 import jsonpickle
 
-from utils import log
+from utils import log, generate_malicious_chain
 
 app = Flask(__name__)
 
@@ -92,6 +92,8 @@ def get_peers():
 
 @app.route('/chain', methods=['GET'])
 def get_chain():
+    if miner.name == "malicious miner":
+        miner.blockchain.chain = generate_malicious_chain(miner.blockchain.chain)
     chain_data = jsonpickle.encode(blockchain.chain)
     return json.dumps({"length": len(blockchain.chain), "chain": chain_data, "threshold": blockchain.threshold, "difficulty" : blockchain.difficulty}), 200
 
