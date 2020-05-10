@@ -65,7 +65,7 @@ class Client:
         blockchain = consensus(blockchain, self.peers)
         self.total_number_messages += len(self.peers) * 2
         log("get_utxo_pool", f'blockchain chain: {blockchain.chain}')
-        log("PERFORMANCE" f'Average number of message sent per block = {self.total_number_messages / len(blockchain.chain)} messages/block')
+        log("PERFORMANCE", f'Average number of message sent per block = {self.total_number_messages / len(blockchain.chain)} messages/block')
         self.utxo_pool = []
         for block in blockchain.chain:
             for tx in block.transactions:

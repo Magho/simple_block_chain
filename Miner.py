@@ -59,7 +59,7 @@ class Miner:
             computed_hash = block.compute_hash()
         self.total_time_used_in_mining += (time.time() - start_time)
         log("PERFORMANCE", f"total time used in mining = {self.total_time_used_in_mining} seconds")
-        log("PERFORMANCE", f"average time to mine a block {self.total_time_used_in_mining/(self.blockchain.chain + 1)} second/block")
+        log("PERFORMANCE", f"average time to mine a block {self.total_time_used_in_mining/(len(self.blockchain.chain) + 1)} second/block")
         if self.got_notified:
             self.got_notified = False
         return computed_hash
