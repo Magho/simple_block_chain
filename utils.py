@@ -3,6 +3,11 @@ import sys
 
 import jsonpickle
 import logging
+from Crypto import Random
+from Crypto.PublicKey import RSA
+
+from UTXO import UTXO
+
 logging.addLevelName(logging.DEBUG, 'D')
 logging.addLevelName(logging.WARNING, 'W')
 logging.addLevelName(logging.ERROR, 'E')
@@ -70,3 +75,12 @@ def are_equal_chains(chain1, chain2):
         if not is_equal_blocks(i, j):
             return False
     return True
+
+def generate_malicious_chain(chain):
+    random_generator = Random.new().read
+    key = RSA.generate(1024, random_generator)
+    public_key = key.publickey()
+    for block in chain:
+        for transaction in block.transactions:
+            transaction.recipients[0] = public_key
+    return chain
