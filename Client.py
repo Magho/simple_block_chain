@@ -13,7 +13,6 @@ from utils import contains_in_list, delete, index, log
 
 
 class Client:
-
     def __init__(self, name_in, peers):
         """
             new client should have
@@ -31,6 +30,7 @@ class Client:
         self.utxo_pool = []
         self.chain = None
         self.original = name_in == 0
+        self.total_number_messages = 0
 
     def make_transaction(self, value_in, recipient_in, mode="pow"):
         """
@@ -57,11 +57,16 @@ class Client:
         get output transactions that has public key of client
         :return:
         """
+        self.total_number_messages += len(self.peers)
+
         if self.name == 0:
             # return as it is original client has no pool and no check
+            log("PERFORMANCE", f'Original client total number of message sent = {self.total_number_messages} messages')
             return
         blockchain = Blockchain()
         blockchain = consensus(blockchain, self.peers, mode=mode)
+        self.total_number_messages += len(self.peers)
+        log("PERFORMANCE", f'Average number of message sent per block for client {self.name} = {self.total_number_messages / len(blockchain.chain)} messages/block')
         log("get_utxo_pool", f'blockchain chain: {blockchain.chain}')
         self.utxo_pool = []
         for block in blockchain.chain:

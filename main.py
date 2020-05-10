@@ -22,7 +22,8 @@ import jsonpickle
 from utils import log
 
 app = Flask(__name__)
-
+total_number_message = 0
+total_time_taken_on_agreement = 0
 blockchain = Blockchain()
 test_names = ["special miner", "a miner"]
 test_ips = ["http://192.168.1.108:5000", "http://192.168.1.108:5001"]
@@ -82,7 +83,7 @@ def new_transaction():
 
 @app.route('/new_transaction_special_miner', methods=['POST'])
 def new_transaction_special_miner():
-
+    global total_number_message, total_time_taken_on_agreement
     tx_data = request.get_json()
     log("new_transaction", f"request data: {tx_data}")
     required_fields = ["transaction"]
@@ -92,9 +93,15 @@ def new_transaction_special_miner():
     transaction = jsonpickle.decode(tx_data["transaction"])
     headers = {'Content-Type': "application/json"}
     data = {"transaction": jsonpickle.encode(transaction)}
+    start_time = time.time()
     for peer in peers:
         url = f'{peer}/new_transaction_BFT'
         requests.post(url, data=json.dumps(data), headers=headers)
+    total_number_message += len(peers)
+    log("PERFORMANCE", f'Average number of message sent per block = {total_number_message / len(blockchain.chain)} messages/block')
+    total_time_taken_on_agreement += time.time() - start_time
+    log("PERFORMANCE", f"total time taken to agree on the blockchain = {total_time_taken_on_agreement} seconds")
+    log("PERFORMANCE", f"average time taken to agree on the blockchain per block = {total_time_taken_on_agreement / len(blockchain.chain)} seconds/block")
     log("new_transaction", f"add new transaction bft")
     miner.add_new_transaction(transaction, mode="bft")
     return "Success", 200
